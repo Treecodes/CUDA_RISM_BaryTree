@@ -185,7 +185,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Clusters_Free(&clusters);
         Batches_Free(&batches);
         STOP_TIMER(&time_tree[10]);
-        
         // Total setup time
         time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6];
         

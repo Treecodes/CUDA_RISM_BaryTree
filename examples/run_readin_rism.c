@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     make_vector(sources->y, sources->num);
     make_vector(sources->z, sources->num);
     make_vector(sources->q, sources->num);
-
+    printf("file_pqri %s\n",file_pqr);
     FILE *points_fp = fopen(file_pqr, "r");
 
     for (int i = 0; i < N; ++i) {
