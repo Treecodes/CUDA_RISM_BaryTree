@@ -60,6 +60,7 @@ void K_DCF_CP_Lagrange(
         #pragma acc atomic
 #endif
         cluster_q[ii] += temporary_potential;
+       printf("old %i %15.6e\n", ii, cluster_q[ii]);
     }
     }
     }

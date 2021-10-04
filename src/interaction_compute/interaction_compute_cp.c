@@ -110,7 +110,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef CUDA_ENABLED
                     #pragma acc host_data use_device( \
                             source_x, source_y, source_z, source_q, \
-                            cluster_x, cluster_y, cluster_z, cluster_q)
+                            cluster_x, cluster_y, cluster_z)//cluster_q removed
                     {
                     //printf("CUDA Kernel call");
                     K_CUDA_Coulomb_CP_Lagrange(
@@ -155,7 +155,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef CUDA_ENABLED
                     #pragma acc host_data use_device( \
                             source_x, source_y, source_z, source_q, \
-                            cluster_x, cluster_y, cluster_z, cluster_q)
+                            cluster_x, cluster_y, cluster_z) //cluster_q removed
                     {
                     K_CUDA_TCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -249,7 +249,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-                #pragma acc host_data use_device(potential, \
+                #pragma acc host_data use_device( \
                         source_x, source_y, source_z, source_q)
                 {
                 K_CUDA_Coulomb_PP(
@@ -267,7 +267,20 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     run_params, potential, stream_id);
                 }
 #else
-                K_Coulomb_PP(
+    //            K_Coulomb_PP(
+    //                target_x_low_ind, target_x_high_ind,
+    //                target_y_low_ind, target_y_high_ind,
+    //                target_z_low_ind, target_z_high_ind,
+
+    //                target_x_min,      target_y_min,      target_z_min,
+    //                target_xdd,        target_ydd,        target_zdd,
+     //               target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+
+     //               batch_num_sources, batch_idx_start,
+      //              source_x, source_y, source_z, source_q,
+
+       //             run_params, potential, stream_id);
+                test_flat_PP(
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
                     target_z_low_ind, target_z_high_ind,
@@ -280,19 +293,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     source_x, source_y, source_z, source_q,
 
                     run_params, potential, stream_id);
-    //            test_flat_PP(
-    //                target_x_low_ind, target_x_high_ind,
-    //                target_y_low_ind, target_y_high_ind,
-    //                target_z_low_ind, target_z_high_ind,
-
-    //                target_x_min,      target_y_min,      target_z_min,
-    //                target_xdd,        target_ydd,        target_zdd,
-    //                target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
-
-    //                batch_num_sources, batch_idx_start,
-    //                source_x, source_y, source_z, source_q,
-
-    //                run_params, potential, stream_id);
 
 #endif
 

@@ -73,18 +73,18 @@ void K_CUDA_Coulomb_CP_Lagrange(
         printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
     printf("3. Downloading Device memory to Host ...\n");
-    cudaErr = cudaMemcpy(h_temp_pot,d_temporary_potential, (batch_num_sources+1) * lim3 *sizeof(double),cudaMemcpyDeviceToHost);
+    cudaErr = cudaMemcpy(h_temp_pot,d_temporary_potential, (batch_num_sources) * lim3 *sizeof(double),cudaMemcpyDeviceToHost);
     if ( cudaErr != cudaSuccess )
         printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
     printf("4. Collecting cluster potentials on Host ...\n");
 
-    for (int cid = 0; cid < cid_lim3; cid++) {
+    for (int cid = 0; cid < lim3; cid++) {
         int ii = cluster_q_start + cid;
         for (int j = 0; j < batch_num_sources; j++) {
-            cluster_q[ii] += temporary_potential[j+batch_num_sources*cid];
+            cluster_q[ii] += h_temp_pot[j+batch_num_sources*cid];
         }
-        printf("new %i %15.6e\n", cid, cluster_q[ii]);
+        printf("new %i %15.6e\n", ii, cluster_q[ii]);
     } // end collect
 
     printf("5. Cleaning up working memory ...\n");
