@@ -7,7 +7,7 @@
 
 
 __global__ 
-static void CUDA_Coulomb_CP_Lagrange(int batch_num_sources, int batch_idx_start,
+void CUDA_Coulomb_CP_Lagrange(int batch_num_sources, int batch_idx_start,
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     double *source_x, double *source_y, double *source_z, double *source_q,
     double *cluster_x, double *cluster_y, double *cluster_z,
@@ -16,7 +16,7 @@ static void CUDA_Coulomb_CP_Lagrange(int batch_num_sources, int batch_idx_start,
     int fid=threadIdx.x + blockDim.x * blockIdx.x;
     int cid_lim2 = interp_order_lim*interp_order_lim;
     int cid_lim3 = interp_order_lim*cid_lim2;
-     if (fid < batch_num_sources * cid_lim3){
+    if (fid < batch_num_sources * cid_lim3){
         int cid = fid/batch_num_sources;
         int j = fid-cid*batch_num_sources;
         int k1 = cid/cid_lim2; int tmp = cid - k1*cid_lim2;
@@ -27,15 +27,12 @@ static void CUDA_Coulomb_CP_Lagrange(int batch_num_sources, int batch_idx_start,
         double cz = cluster_z[cluster_pts_start + k3];
 
         int jj = batch_idx_start + j;
-      //  printf("new J,JJ,K1,K2,K3,II %i,%i,%i,%i,%i,%i\n", j,jj,k1,k2,k3,(cluster_q_start+cid));
         double dx = cx - source_x[jj];
         double dy = cy - source_y[jj];
         double dz = cz - source_z[jj];
         double r = sqrt(dx*dx + dy*dy + dz*dz);
         temporary_potential[j+batch_num_sources*cid] = source_q[jj] / r;
-       // printf("new temporary_potential: %i %15.6e\n", j+batch_num_sources*cid,
-       //  temporary_potential[j+batch_num_sources*cid]);
-      }
+    }
 }
 
 
@@ -47,11 +44,8 @@ void K_CUDA_Coulomb_CP_Lagrange(
     double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
     struct RunParams *run_params, int gpu_async_stream_id)
 {
-
-    printf("Before Kernel call :::: \n");
-    printf("1. Allocating Host and Device working memory ...\n");
     cudaError_t cudaErr;
-    double *h_temp_pot,*d_temporary_potential;
+    double *h_temp_pot, *d_temporary_potential;
     int lim3= interp_order_lim*interp_order_lim*interp_order_lim;
     cudaErr = cudaMallocHost(&h_temp_pot, sizeof(double)*batch_num_sources*lim3);
     if ( cudaErr != cudaSuccess )
@@ -60,38 +54,31 @@ void K_CUDA_Coulomb_CP_Lagrange(
     if ( cudaErr != cudaSuccess )
         printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-    printf("2. Sending Device memories to Kernel ...\n");
-
-    int nthreads = 512;
-    int nblocks = ((batch_num_sources * lim3))/ nthreads + 1;
+    int nthreads = 256;
+    int nblocks = (batch_num_sources * lim3 - 1)/ nthreads + 1;
     CUDA_Coulomb_CP_Lagrange<<<nblocks,nthreads>>>(batch_num_sources, batch_idx_start,
-                      cluster_q_start, cluster_pts_start, interp_order_lim,
-                      source_x,  source_y,  source_z,  source_q,
-                      cluster_x, cluster_y, cluster_z, d_temporary_potential);
+                    cluster_q_start, cluster_pts_start, interp_order_lim,
+                    source_x,  source_y,  source_z,  source_q,
+                    cluster_x, cluster_y, cluster_z, d_temporary_potential);
     cudaErr = cudaDeviceSynchronize();
     if ( cudaErr != cudaSuccess )
         printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-    printf("3. Downloading Device memory to Host ...\n");
-    cudaErr = cudaMemcpy(h_temp_pot,d_temporary_potential, (batch_num_sources) * lim3 *sizeof(double),cudaMemcpyDeviceToHost);
+    cudaErr = cudaMemcpy(h_temp_pot, d_temporary_potential,
+                         batch_num_sources * lim3 * sizeof(double), cudaMemcpyDeviceToHost);
     if ( cudaErr != cudaSuccess )
         printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-    printf("4. Collecting cluster potentials on Host ...\n");
 
     for (int cid = 0; cid < lim3; cid++) {
         int ii = cluster_q_start + cid;
         for (int j = 0; j < batch_num_sources; j++) {
             cluster_q[ii] += h_temp_pot[j+batch_num_sources*cid];
         }
-        printf("new %i %15.6e\n", ii, cluster_q[ii]);
-    } // end collect
+        //printf("new %i %15.6e\n", ii, cluster_q[ii]);
+    }
 
-    printf("5. Cleaning up working memory ...\n");
     cudaFree(h_temp_pot);
     cudaFree(d_temporary_potential);
-
-    printf("Exiting :::: \n");
 
     return;
 }
