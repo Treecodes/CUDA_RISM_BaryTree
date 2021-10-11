@@ -30,16 +30,11 @@ void K_Coulomb_CP_Lagrange(
 
         double temporary_potential = 0.0;
             
-    //    printf("K1: %i\n", k1);
-    //    printf("K2: %i\n", k2);
-    //    printf("K3: %i\n", k3);
-
         double cx = cluster_x[cluster_pts_start + k1];
         double cy = cluster_y[cluster_pts_start + k2];
         double cz = cluster_z[cluster_pts_start + k3];
 
         int ii = cluster_q_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
-     //   printf("II: %i\n", ii);
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop vector independent reduction(+:temporary_potential)
@@ -53,9 +48,6 @@ void K_Coulomb_CP_Lagrange(
 #endif
 
             int jj = batch_idx_start + j;
-           // printf("old J,JJ,K1,K2,K3,II %i,%i,%i,%i,%i,%i\n", j,jj,k1,k2,k3,ii);
-           // printf("cx: %lf\n", cx);
-           // printf("source_x: %lf\n", source_x[jj]);
             double dx = cx - source_x[jj];
             double dy = cy - source_y[jj];
             double dz = cz - source_z[jj];
@@ -67,7 +59,7 @@ void K_Coulomb_CP_Lagrange(
         #pragma acc atomic
 #endif
         cluster_q[ii] += temporary_potential;
-        printf("old %15.6e\n", cluster_q[ii]);
+        //printf("old %15.6e\n", cluster_q[ii]);
     }
     }
     }
@@ -94,11 +86,7 @@ void test_flat(
     int cid_lim3 = interp_order_lim*cid_lim2;
     double *temporary_potential;
     temporary_potential = (double*) malloc(sizeof(double)*batch_num_sources * cid_lim3);
-       printf("new batch_num_sources: %i\n", batch_num_sources);
-       printf("new cid_lim3: %i\n", cid_lim3);
-     //    return;
-   for (int fid = 0; fid < batch_num_sources * cid_lim3; fid++) {
-       //printf("new fid: %i\n", fid);
+    for (int fid = 0; fid < batch_num_sources * cid_lim3; fid++) {
         int cid = fid/batch_num_sources;
         int j = fid-cid*batch_num_sources;
         int k1 = cid/cid_lim2; int tmp = cid - k1*cid_lim2;
@@ -109,28 +97,20 @@ void test_flat(
         double cz = cluster_z[cluster_pts_start + k3];
 
         int jj = batch_idx_start + j;
-        printf("new source_q: %d\n", source_q[jj]);
-        printf("new temp: %d\n", temporary_potential[j+batch_num_sources*cid]);
-       // printf("new J,JJ,K1,K2,K3,II %i,%i,%i,%i,%i,%i\n", j,jj,k1,k2,k3,(cluster_q_start+cid));
-        //fflush(stdout);
         double dx = cx - source_x[jj];
         double dy = cy - source_y[jj];
         double dz = cz - source_z[jj];
         double r = sqrt(dx*dx + dy*dy + dz*dz);
         temporary_potential[j+batch_num_sources*cid] = source_q[jj] / r;
-      }
+    }
     for (int cid = 0; cid < cid_lim3; cid++) {
-        //printf(" new cid: %i\n", cid);
-       // fflush(stdout);
         int ii = cluster_q_start + cid;
         for (int j = 0; j < batch_num_sources; j++) {
-        //    cluster_q[ii] += temporary_potential[j+batch_num_sources*cid];
+            cluster_q[ii] += temporary_potential[j+batch_num_sources*cid];
         } 
         //printf("new %15.6e\n", cluster_q[ii]);
-        //fflush(stdout);
     } // end collect
       free(temporary_potential);
-        //printf("end");
 
     return;
 }

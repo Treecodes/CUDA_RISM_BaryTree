@@ -53,14 +53,13 @@ void K_DCF_CP_Lagrange(
             double dz = cz - source_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            //temporary_potential += source_q[jj] / r;
             temporary_potential += source_q[jj] * erf(r / eta) / r;
         }
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
         cluster_q[ii] += temporary_potential;
-       printf("old %i %15.6e\n", ii, cluster_q[ii]);
+        //printf("old %i %15.6e\n", ii, cluster_q[ii]);
     }
     }
     }

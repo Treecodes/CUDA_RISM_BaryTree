@@ -6,18 +6,19 @@
 
 
 __global__ 
-static void CUDA_Coulomb_PP_Lagrange(int cluster_num_sources, int cluster_idx_start,
-                                     int target_x_low_ind, int target_y_low_ind, int target_z_low_ind,
-                                     int target_x_high_ind, int target_y_high_ind, int target_z_high_ind,
-                                     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
-                                     double target_xmin, double target_ymin, double target_zmin,
-                                     double target_xdd, double target_ydd, double target_zdd,
-                                     double *source_x, double *source_y, double *source_z, double *source_q,
-                                     double *potential )
+static void CUDA_Coulomb_PP(
+    int cluster_num_sources, int cluster_idx_start,
+    int target_x_low_ind, int target_y_low_ind, int target_z_low_ind,
+    int target_x_high_ind, int target_y_high_ind, int target_z_high_ind,
+    int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
+    double target_xmin, double target_ymin, double target_zmin,
+    double target_xdd, double target_ydd, double target_zdd,
+    double *source_x, double *source_y, double *source_z, double *source_q,
+    double *potential )
 {
-    int ix=threadIdx.x + blockDim.x * blockIdx.x;
-    int iy=threadIdx.y + blockDim.y * blockIdx.y;
-    int iz=threadIdx.z + blockDim.z * blockIdx.z;
+    int ix = threadIdx.x + blockDim.x * blockIdx.x;
+    int iy = threadIdx.y + blockDim.y * blockIdx.y;
+    int iz = threadIdx.z + blockDim.z * blockIdx.z;
     int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
     if(ix >= target_x_low_ind && ix <= target_x_high_ind &&
@@ -37,12 +38,13 @@ static void CUDA_Coulomb_PP_Lagrange(int cluster_num_sources, int cluster_idx_st
             double dz = tz - source_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
             if (r > DBL_MIN) {
-                      temporary_potential += source_q[jj] / r;
-             }
+                temporary_potential += source_q[jj] / r;
+            }
         }
-            potential[ii]+= temporary_potential;
+        potential[ii]+= temporary_potential;
     }
-return;
+
+    return;
 }
 
 
@@ -56,25 +58,26 @@ void K_CUDA_Coulomb_PP(
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
     int cluster_num_sources, int cluster_idx_start,
     double *source_x, double *source_y, double *source_z, double *source_q,
-    struct RunParams *run_params, double *potential, int gpu_async_stream_id)
+    struct RunParams *run_params, double *potential, int gpu_async_stream_id )
 {
-
-    int threadsperblock = 8;
-    dim3 nthreads(threadsperblock,threadsperblock,threadsperblock);
+    int threadsperblock = 4;
+    dim3 nthreads(threadsperblock, threadsperblock, threadsperblock);
     dim3 nblocks((target_x_high_ind-target_x_low_ind)/threadsperblock + 1,
                  (target_y_high_ind-target_y_low_ind)/threadsperblock + 1,
                  (target_z_high_ind-target_z_low_ind)/threadsperblock + 1);
 
-    CUDA_Coulomb_PP_Lagrange<<<nblocks,nthreads>>>(cluster_num_sources, cluster_idx_start,
-                                     target_x_low_ind, target_y_low_ind, target_z_low_ind,
-                                     target_x_high_ind, target_y_high_ind, target_z_high_ind,
-                                     target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
-                                     target_xmin, target_ymin, target_zmin,
-                                     target_xdd, target_ydd, target_zdd,
-                                     source_x, source_y, source_z,source_q,
-                                     potential );
-     cudaDeviceSynchronize();
-
+    CUDA_Coulomb_PP<<<nblocks,nthreads>>>(cluster_num_sources, cluster_idx_start,
+                                    target_x_low_ind, target_y_low_ind, target_z_low_ind,
+                                    target_x_high_ind, target_y_high_ind, target_z_high_ind,
+                                    target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+                                    target_xmin, target_ymin, target_zmin,
+                                    target_xdd, target_ydd, target_zdd,
+                                    source_x, source_y, source_z,source_q,
+                                    potential );
+    cudaError_t cudaErr;
+    cudaErr = cudaDeviceSynchronize();
+    if ( cudaErr != cudaSuccess )
+        printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
     return;
 }
