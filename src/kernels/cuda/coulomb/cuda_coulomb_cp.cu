@@ -35,6 +35,18 @@ void CUDA_Coulomb_CP_Lagrange(int batch_num_sources, int batch_idx_start,
     }
 }
 
+__global__ 
+void CUDA_Coul_CP_collect(int lim3, int cluster_q_start, int batch_num_sources,
+    double *cluster_q, double *temporary_potential )
+{
+    for (int cid = 0; cid < lim3; cid++) {
+        int ii = cluster_q_start + cid;
+        for (int j = 0; j < batch_num_sources; j++) {
+            cluster_q[ii] += temporary_potential[j+batch_num_sources*cid];
+        }
+        //printf("new %i %15.6e\n", ii, cluster_q[ii]);
+    }
+}
 
 __host__
 void K_CUDA_Coulomb_CP_Lagrange(
@@ -45,12 +57,9 @@ void K_CUDA_Coulomb_CP_Lagrange(
     struct RunParams *run_params, int gpu_async_stream_id)
 {
     cudaError_t cudaErr;
-    double *h_temp_pot, *d_temporary_potential;
+    double *temporary_potential;
     int lim3= interp_order_lim*interp_order_lim*interp_order_lim;
-    cudaErr = cudaMallocHost(&h_temp_pot, sizeof(double)*batch_num_sources*lim3);
-    if ( cudaErr != cudaSuccess )
-        printf("Host malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-    cudaErr = cudaMalloc(&d_temporary_potential, sizeof(double)*batch_num_sources*lim3);
+    cudaErr = cudaMalloc(&temporary_potential, sizeof(double)*batch_num_sources*lim3);
     if ( cudaErr != cudaSuccess )
         printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
@@ -59,26 +68,16 @@ void K_CUDA_Coulomb_CP_Lagrange(
     CUDA_Coulomb_CP_Lagrange<<<nblocks,nthreads>>>(batch_num_sources, batch_idx_start,
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     source_x,  source_y,  source_z,  source_q,
-                    cluster_x, cluster_y, cluster_z, d_temporary_potential);
+                    cluster_x, cluster_y, cluster_z, temporary_potential);
     cudaErr = cudaDeviceSynchronize();
     if ( cudaErr != cudaSuccess )
         printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-    cudaErr = cudaMemcpy(h_temp_pot, d_temporary_potential,
-                         batch_num_sources * lim3 * sizeof(double), cudaMemcpyDeviceToHost);
-    if ( cudaErr != cudaSuccess )
-        printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+    // collection is in serieal code for now
+    CUDA_Coul_CP_collect<<<1,1>>>(lim3, cluster_q_start, batch_num_sources,
+                    cluster_q, temporary_potential);
 
-    for (int cid = 0; cid < lim3; cid++) {
-        int ii = cluster_q_start + cid;
-        for (int j = 0; j < batch_num_sources; j++) {
-            cluster_q[ii] += h_temp_pot[j+batch_num_sources*cid];
-        }
-        //printf("new %i %15.6e\n", ii, cluster_q[ii]);
-    }
-
-    cudaFree(h_temp_pot);
-    cudaFree(d_temporary_potential);
+    cudaFree(temporary_potential);
 
     return;
 }

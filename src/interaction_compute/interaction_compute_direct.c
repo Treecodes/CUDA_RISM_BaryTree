@@ -67,7 +67,7 @@ void InteractionCompute_Direct(double *potential,
     if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device(potential, \
+        #pragma acc host_data use_device( potential, \
                 source_x, source_y, source_z, source_q)
         {
         K_CUDA_Coulomb_PP(
@@ -108,7 +108,7 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device(potential, \
+        #pragma acc host_data use_device( potential, \
                 source_x, source_y, source_z, source_q)
         {
         K_CUDA_TCF_PP(
@@ -149,7 +149,7 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device(potential, \
+        #pragma acc host_data use_device( potential, \
                 source_x, source_y, source_z, source_q)
         {
         K_CUDA_DCF_PP(

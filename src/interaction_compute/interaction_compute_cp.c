@@ -90,6 +90,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 /* * ************ POTENTIAL FROM APPROX *********************/
 /* * ********************************************************/
 
+#ifdef CUDA_ENABLED
+        #pragma acc host_data use_device( \
+                source_x, source_y, source_z, source_q, \
+                cluster_x, cluster_y, cluster_z, cluster_q )
+        {
+#endif
         for (int j = 0; j < num_approx_in_batch; j++) {
 
             int node_index = approx_inter_list[i][j];
@@ -108,10 +114,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                    #pragma acc host_data use_device( \
-                            source_x, source_y, source_z, source_q, \
-                            cluster_x, cluster_y, cluster_z)//cluster_q removed
-                    {
                     K_CUDA_Coulomb_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
@@ -119,7 +121,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
-                    }
 #else
                     K_Coulomb_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -128,14 +129,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
-                    //test flattened loop
-     //               test_flat(
-     //                   batch_num_sources, batch_idx_start,
-     //                   cluster_q_start, cluster_pts_start,
-     //                   interp_order_lim,
-     //                   source_x, source_y, source_z, source_q,
-     //                   cluster_x, cluster_y, cluster_z, cluster_q,
-     //                   run_params, stream_id);
 #endif
 
                 } else if (run_params->approximation == HERMITE) {
@@ -152,10 +145,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                    #pragma acc host_data use_device( \
-                            source_x, source_y, source_z, source_q, \
-                            cluster_x, cluster_y, cluster_z) //cluster_q removed
-                    {
                     K_CUDA_TCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
@@ -163,7 +152,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
-                    }
 #else
                     K_TCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -188,10 +176,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                    #pragma acc host_data use_device( \
-                            source_x, source_y, source_z, source_q, \
-                            cluster_x, cluster_y, cluster_z) //cluster_q removed 
-                    {
                     K_CUDA_DCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
@@ -199,7 +183,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
-                    }
 #else
                     K_DCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -215,12 +198,19 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 }
             }
         } // end loop over cluster approximations
-
+#ifdef CUDA_ENABLED
+        }
+#endif
 
 /* * ********************************************************/
 /* * ************ POTENTIAL FROM DIRECT *********************/
 /* * ********************************************************/
 
+#ifdef CUDA_ENABLED
+                #pragma acc host_data use_device( potential, \
+                        source_x, source_y, source_z, source_q)
+        {
+#endif
         for (int j = 0; j < num_direct_in_batch; j++) {
 
             int node_index = direct_inter_list[i][j];
@@ -248,9 +238,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-                #pragma acc host_data use_device( \
-                        source_x, source_y, source_z, source_q)
-                {
                 K_CUDA_Coulomb_PP(
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -264,7 +251,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     source_x, source_y, source_z, source_q,
 
                     run_params, potential, stream_id);
-                }
 #else
                 K_Coulomb_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -289,9 +275,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-                #pragma acc host_data use_device(potential, \
-                        source_x, source_y, source_z, source_q)
-                {
                 K_CUDA_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -305,7 +288,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     source_x, source_y, source_z, source_q,
 
                     run_params, potential, stream_id);
-                }
 #else
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -330,9 +312,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
-                #pragma acc host_data use_device(potential, \
-                        source_x, source_y, source_z, source_q)
-                {
                 K_CUDA_DCF_PP(
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -346,7 +325,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     source_x, source_y, source_z, source_q,
 
                     run_params, potential, stream_id);
-                }
 #else
                 K_DCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -366,6 +344,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             }
         } // end loop over number of direct interactions
     } // end loop over target batches
+
+#ifdef CUDA_ENABLED
+    }
+#endif
 
 #ifdef OPENACC_ENABLED
         #pragma acc wait

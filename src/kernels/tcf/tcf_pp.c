@@ -68,11 +68,13 @@ void K_TCF_PP(
                 #pragma acc atomic
 #endif
                 potential[ii] += temporary_potential;
+                //printf("direct potential, %d %15.6e\n", ii, potential[ii]);
             }
         }
     }
 #ifdef OPENACC_ENABLED
     } // end kernel
 #endif
+    //exit(0);
     return;
 }
