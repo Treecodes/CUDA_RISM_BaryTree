@@ -4,6 +4,7 @@
 
 #include "cuda_coulomb_pp.h"
 
+__managed__ double *d_potential;
 
 __global__ 
 static void CUDA_Coulomb_PP(
@@ -13,8 +14,7 @@ static void CUDA_Coulomb_PP(
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
     double target_xmin, double target_ymin, double target_zmin,
     double target_xdd, double target_ydd, double target_zdd,
-    double *source_x, double *source_y, double *source_z, double *source_q,
-    double *potential )
+    double *source_x, double *source_y, double *source_z, double *source_q)
 {
     int ix = threadIdx.x + blockDim.x * blockIdx.x;
     int iy = threadIdx.y + blockDim.y * blockIdx.y;
@@ -41,7 +41,7 @@ static void CUDA_Coulomb_PP(
                 temporary_potential += source_q[jj] / r;
             }
         }
-        potential[ii]+= temporary_potential;
+        d_potential[ii]+= temporary_potential;
     }
 
     return;
@@ -58,7 +58,7 @@ void K_CUDA_Coulomb_PP(
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
     int cluster_num_sources, int cluster_idx_start,
     double *source_x, double *source_y, double *source_z, double *source_q,
-    struct RunParams *run_params, double *potential, int gpu_async_stream_id )
+    struct RunParams *run_params, int gpu_async_stream_id )
 {
     cudaError_t cudaErr;
  
@@ -74,8 +74,7 @@ void K_CUDA_Coulomb_PP(
                                     target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
                                     target_xmin, target_ymin, target_zmin,
                                     target_xdd, target_ydd, target_zdd,
-                                    source_x, source_y, source_z,source_q,
-                                    potential );
+                                    source_x, source_y, source_z, source_q);
     cudaErr = cudaDeviceSynchronize();
     if ( cudaErr != cudaSuccess )
         printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -106,3 +105,24 @@ void K_CUDA_Coulomb_PP(
     return;
 }
 
+__host__
+void CUDA_Setup_PP( int target_xyz_dim )
+{
+    cudaError_t cudaErr = cudaMallocManaged(&d_potential, sizeof(double)*target_xyz_dim);
+    if ( cudaErr != cudaSuccess )
+        printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+    return;
+}
+
+__host__
+void CUDA_Cleanup_PP( int target_xyz_dim, double *potential )
+{
+    cudaError_t cudaErr = cudaMemcpy(potential, d_potential,
+        target_xyz_dim * sizeof(double), cudaMemcpyDeviceToHost);
+    if ( cudaErr != cudaSuccess )
+        printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+    cudaFree(d_potential);
+    return;
+}

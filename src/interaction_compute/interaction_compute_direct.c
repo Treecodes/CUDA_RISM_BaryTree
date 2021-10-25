@@ -47,19 +47,25 @@ void InteractionCompute_Direct(double *potential,
     int target_ydim = targets->ydim;
     int target_zdim = targets->zdim;
 
-
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], \
                             source_z[0:num_sources], source_q[0:num_sources]), \
                        copy(potential[0:num_targets])
-#endif
     {
+#endif
 
 /* * ********************************************************/
 /* * ************** COMPLETE DIRECT SUM *********************/
 /* * ********************************************************/
 
 
+#ifdef CUDA_ENABLED
+    #pragma acc host_data use_device( \
+                source_x, source_y, source_z, source_q)
+    {
+    int target_xyz_dim = target_xdim * target_ydim * target_zdim;
+    CUDA_Setup_PP(target_xyz_dim);
+#endif
     /* * *************************************/
     /* * ******* Coulomb *********************/
     /* * *************************************/
@@ -67,9 +73,6 @@ void InteractionCompute_Direct(double *potential,
     if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device( potential, \
-                source_x, source_y, source_z, source_q)
-        {
         K_CUDA_Coulomb_PP(
             0,  target_xdim-1,
             0,  target_ydim-1,
@@ -82,8 +85,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, potential, 0);
-        }
+            run_params, 0);
 #else
         K_Coulomb_PP(
             0,  target_xdim-1,
@@ -108,9 +110,6 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device( potential, \
-                source_x, source_y, source_z, source_q)
-        {
         K_CUDA_TCF_PP(
             0,  target_xdim-1,
             0,  target_ydim-1,
@@ -123,8 +122,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, potential, 0);
-        }
+            run_params, 0);
 #else
         K_TCF_PP(
             0,  target_xdim-1,
@@ -149,9 +147,6 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device( potential, \
-                source_x, source_y, source_z, source_q)
-        {
         K_CUDA_DCF_PP(
             0,  target_xdim-1,
             0,  target_ydim-1,
@@ -164,8 +159,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, potential, 0);
-        }
+            run_params, 0);
 #else
         K_DCF_PP(
             0,  target_xdim-1,
@@ -184,10 +178,26 @@ void InteractionCompute_Direct(double *potential,
                         
     }
 
-#ifdef OPENACC_ENABLED
-        #pragma acc wait
+#ifdef CUDA_ENABLED
+    CUDA_Cleanup_PP(target_xyz_dim, potential);
+    }
 #endif
+
+#ifdef OPENACC_ENABLED
+    #pragma acc wait
     } // end acc data region
+#endif
+
+    int target_yzdim = target_ydim*target_zdim;
+    for (int ix = 0; ix <= target_xdim-1; ix++) {
+    for (int iy = 0; iy <= target_ydim-1; iy++) {
+    for (int iz = 0; iz <= target_zdim-1; iz++) {
+        int ii = (ix * target_yzdim) + (iy * target_zdim) + iz;
+        printf("direct sum pot, %d %15.6e\n", ii, potential[ii]);
+    }
+    }
+    }
+
 
     return;
 }
