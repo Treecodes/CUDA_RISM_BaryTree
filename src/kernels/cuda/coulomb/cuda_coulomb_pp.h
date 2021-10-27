@@ -19,26 +19,9 @@ void K_CUDA_Coulomb_PP(
     int number_of_source_points_in_cluster, int starting_index_of_source,
     double *source_x, double *source_y, double *source_z, double *source_q,
 
-    struct RunParams *run_params, int gpu_async_stream_id);
+    struct RunParams *run_params, double *potential, int gpu_async_stream_id);
 #ifdef __CUDACC__
 }
 #endif
-
-#ifdef __CUDACC__
-extern "C" {
-#endif
-void CUDA_Setup_PP(int target_xyz_dim);
-#ifdef __CUDACC__
-}
-#endif
-
-#ifdef __CUDACC__
-extern "C" {
-#endif
-void CUDA_Cleanup_PP(int target_xyz_dim, double *potential);
-#ifdef __CUDACC__
-}
-#endif
-
 
 #endif /* H_K_CUDA_COULOMB_PP_H */

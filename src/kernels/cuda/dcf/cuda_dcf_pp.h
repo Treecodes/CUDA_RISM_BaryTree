@@ -19,7 +19,7 @@ void K_CUDA_DCF_PP(
     int number_of_source_points_in_cluster, int starting_index_of_source,
     double *source_x, double *source_y, double *source_z, double *source_q,
 
-    struct RunParams *run_params, int gpu_async_stream_id);
+    struct RunParams *run_params, double *potential, int gpu_async_stream_id);
 #ifdef __CUDACC__
 }
 #endif

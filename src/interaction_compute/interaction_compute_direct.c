@@ -49,8 +49,7 @@ void InteractionCompute_Direct(double *potential,
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], \
-                            source_z[0:num_sources], source_q[0:num_sources]), \
-                       copy(potential[0:num_targets])
+                            source_z[0:num_sources], source_q[0:num_sources]) 
     {
 #endif
 
@@ -63,8 +62,8 @@ void InteractionCompute_Direct(double *potential,
     #pragma acc host_data use_device( \
                 source_x, source_y, source_z, source_q)
     {
-    int target_xyz_dim = target_xdim * target_ydim * target_zdim;
-    CUDA_Setup_PP(target_xyz_dim);
+    //int target_xyz_dim = target_xdim * target_ydim * target_zdim;
+    //CUDA_Setup_PP(target_xyz_dim);
 #endif
     /* * *************************************/
     /* * ******* Coulomb *********************/
@@ -85,7 +84,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, 0);
+            run_params, potential, 0);
 #else
         K_Coulomb_PP(
             0,  target_xdim-1,
@@ -122,7 +121,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, 0);
+            run_params, potential, 0);
 #else
         K_TCF_PP(
             0,  target_xdim-1,
@@ -159,7 +158,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, 0);
+            run_params, potential, 0);
 #else
         K_DCF_PP(
             0,  target_xdim-1,
@@ -179,7 +178,7 @@ void InteractionCompute_Direct(double *potential,
     }
 
 #ifdef CUDA_ENABLED
-    CUDA_Cleanup_PP(target_xyz_dim, potential);
+    //CUDA_Cleanup_PP(target_xyz_dim, potential);
     }
 #endif
 
@@ -188,16 +187,15 @@ void InteractionCompute_Direct(double *potential,
     } // end acc data region
 #endif
 
-    int target_yzdim = target_ydim*target_zdim;
-    for (int ix = 0; ix <= target_xdim-1; ix++) {
-    for (int iy = 0; iy <= target_ydim-1; iy++) {
-    for (int iz = 0; iz <= target_zdim-1; iz++) {
-        int ii = (ix * target_yzdim) + (iy * target_zdim) + iz;
-        printf("direct sum pot, %d %15.6e\n", ii, potential[ii]);
-    }
-    }
-    }
-
+    //int target_yzdim = target_ydim*target_zdim;
+    //for (int ix = 0; ix <= target_xdim-1; ix++) {
+    //for (int iy = 0; iy <= target_ydim-1; iy++) {
+    //for (int iz = 0; iz <= target_zdim-1; iz++) {
+    //    int ii = (ix * target_yzdim) + (iy * target_zdim) + iz;
+    //    printf("direct sum pot, %d %15.6e\n", ii, potential[ii]);
+    //}
+    //}
+    //}
 
     return;
 }

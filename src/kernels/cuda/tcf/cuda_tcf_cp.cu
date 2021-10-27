@@ -39,7 +39,6 @@ void K_CUDA_TCF_CP_Lagrange(
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     double *source_x, double *source_y, double *source_z, double *source_q,
     double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-    //double *h_temporary_potential, double *d_temporary_potential,
     struct RunParams *run_params, int gpu_async_stream_id)
 {
     double kap = run_params->kernel_params[0];

@@ -32,14 +32,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     int cluster_num_interp_pts = run_params->interp_pts_per_cluster;
     int interp_order_lim = run_params->interp_order+1;
 
-    int num_source   = sources->num;
     double *source_x  = sources->x;
     double *source_y  = sources->y;
     double *source_z  = sources->z;
     double *source_q  = sources->q;
 
-    int num_cluster = clusters->num;
-    int num_clusterq = clusters->num_charges;
     double *cluster_x = clusters->x;
     double *cluster_y = clusters->y;
     double *cluster_z = clusters->z;
@@ -71,19 +68,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     int target_x_dim_glob = targets->xdim;
     int target_y_dim_glob = targets->ydim;
     int target_z_dim_glob = targets->zdim;
-   
-    int num_target   = targets->num; 
+    
     double target_xdd = targets->xdd;
     double target_ydd = targets->ydd;
     double target_zdd = targets->zdd;
 
-
-#ifdef CUDA_ENABLED
-    #pragma acc host_data use_device( \
-                source_x, source_y, source_z, source_q, \
-                cluster_x, cluster_y, cluster_z)
-    {
-#endif
 
     for (int i = 0; i < batches->numnodes; i++) {
     
@@ -91,18 +80,22 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
         int batch_iend = batches->iend[i];
         
         int num_approx_in_batch = num_approx[i];
+        int num_direct_in_batch = num_direct[i];
 
         int batch_num_sources = batch_iend - batch_ibeg + 1;
         int batch_idx_start =  batch_ibeg - 1;
+
 
 /* * ********************************************************/
 /* * ************ POTENTIAL FROM APPROX *********************/
 /* * ********************************************************/
 
-//#ifdef CUDA_ENABLED
-//        int lim3 = batch_num_sources*interp_order_lim*interp_order_lim*interp_order_lim;
-//        CUDA_Setup_CP_Lagrange(lim3, h_temporary_potential, d_temporary_potential);
-//#endif
+#ifdef CUDA_ENABLED
+        #pragma acc host_data use_device( \
+                source_x, source_y, source_z, source_q, \
+                cluster_x, cluster_y, cluster_z )
+        {
+#endif
         for (int j = 0; j < num_approx_in_batch; j++) {
 
             int node_index = approx_inter_list[i][j];
@@ -205,47 +198,19 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 }
             }
         } // end loop over cluster approximations
-    } // end loop over target batches
-
 #ifdef CUDA_ENABLED
-//  CUDA_Cleanup_CP_Lagrange(h_temporary_potential, d_temporary_potential);
-    }
-#endif
-
-    for (int i = 0; i < batches->numnodes; i++) {
-        int num_approx_in_batch = num_approx[i];
-        for (int j = 0; j < num_approx_in_batch; j++) {
-            int node_index = approx_inter_list[i][j];
-            int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
-            for (int ii = cluster_q_start;
-                ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
-                printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
-            }
         }
-    }
+#endif
 
 /* * ********************************************************/
 /* * ************ POTENTIAL FROM DIRECT *********************/
 /* * ********************************************************/
 
 #ifdef CUDA_ENABLED
-    #pragma acc host_data use_device( \
-                source_x, source_y, source_z, source_q)
-    {
-    int target_xyz_dim = target_x_dim_glob * target_y_dim_glob * target_z_dim_glob;
-    CUDA_Setup_PP(target_xyz_dim);
+        #pragma acc host_data use_device( \
+                    source_x, source_y, source_z, source_q)
+        {
 #endif
-
-    for (int i = 0; i < batches->numnodes; i++) {
-    
-        int batch_ibeg = batches->ibeg[i];
-        int batch_iend = batches->iend[i];
-        
-        int num_direct_in_batch = num_direct[i];
-
-        int batch_num_sources = batch_iend - batch_ibeg + 1;
-        int batch_idx_start =  batch_ibeg - 1;
-
         for (int j = 0; j < num_direct_in_batch; j++) {
 
             int node_index = direct_inter_list[i][j];
@@ -285,7 +250,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, stream_id);
+                    run_params, potential, stream_id);
 #else
                 K_Coulomb_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -322,7 +287,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, stream_id);
+                    run_params, potential, stream_id);
 #else
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -359,7 +324,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, stream_id);
+                    run_params, potential, stream_id);
 #else
                 K_DCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -378,24 +343,14 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
             }
         } // end loop over number of direct interactions
+#ifdef CUDA_ENABLED
+        }
+#endif
     } // end loop over target batches
 
-#ifdef CUDA_ENABLED
-    CUDA_Cleanup_PP(target_xyz_dim, potential);
-    }
+#ifdef OPENACC_ENABLED
+    #pragma acc wait
 #endif
-
-    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-    printf(":::: num_target ::::, %10d \n", num_target);
-    printf(":::: grid no    ::::, %10d \n", target_x_dim_glob*target_yzdim);
-    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
-    for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
-    for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-        int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-        printf("direct potential, %d %15.6e\n", ii, potential[ii]);
-    }
-    }
-    }
 
     return;
 

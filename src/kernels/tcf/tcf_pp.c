@@ -28,6 +28,14 @@ void K_TCF_PP(
     {
     #pragma acc loop gang collapse(3) independent
 #endif
+    //printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
+    //printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
+    //printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
+    //for (int j = 0; j < cluster_num_sources; j++) {
+    //    int jj = cluster_idx_start + j;
+    //    printf("src x/y/z/q: %10d%10.3e%10.3e%10.3e%10.3e\n", jj,
+    //           source_x[jj], source_y[jj], source_z[jj], source_q[jj]);
+    //}
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
             for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
@@ -75,6 +83,5 @@ void K_TCF_PP(
 #ifdef OPENACC_ENABLED
     } // end kernel
 #endif
-    //exit(0);
     return;
 }
