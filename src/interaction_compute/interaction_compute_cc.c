@@ -390,9 +390,9 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
     } // end loop over target nodes
 
-#ifdef OPENACC_ENABLED
-    #pragma acc wait
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc wait
+///#endif
 
     return;
 

@@ -71,13 +71,13 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     double *qC = clusters->q;
 
 
-#ifdef OPENACC_ENABLED
-    #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
-                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints]) \
-                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
+///                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints]) \
+///                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+///                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
+///    {
+///#endif
 
     if (approximation == LAGRANGE) {
         for (int i = 0; i < tree_numnodes; i++)
@@ -87,10 +87,10 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
         exit(1);
     }
     
-#ifdef OPENACC_ENABLED
-    #pragma acc wait
-    } // end ACC DATA REGION
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc wait
+///    } // end ACC DATA REGION
+///#endif
 
     return;
 }
@@ -131,11 +131,11 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     double *qC = clusters->q;
 
 
-#ifdef OPENACC_ENABLED
-    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                             zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+///                             zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
+///    {
+///#endif
 
     for (int i = 0; i < tree_numnodes; i++) {
         if ((tree->used_children[i] > 0 && (tree->used[i] == 1 || tree->used_parent[i] == 1))
@@ -144,10 +144,10 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
         }
     }
     
-#ifdef OPENACC_ENABLED
-    #pragma acc wait
-    } // end ACC DATA REGION
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc wait
+///    } // end ACC DATA REGION
+///#endif
 
     return;
 }
@@ -191,9 +191,9 @@ void Clusters_Free(struct Clusters **clusters_addr)
     struct Clusters *clusters = *clusters_addr;
     
     if (clusters != NULL) {
-#ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(clusters->x, clusters->y, clusters->z, clusters->q)
-#endif
+///#ifdef OPENACC_ENABLED
+///        #pragma acc exit data delete(clusters->x, clusters->y, clusters->z, clusters->q)
+///#endif
         if (clusters->x != NULL) {
             free_vector(clusters->x);
         }
@@ -252,20 +252,20 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     double z0 = tree->z_min[idx];
     double z1 = tree->z_max[idx];
 
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, clusterX, clusterY, clusterZ, clusterQ) \
-                       create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
-                              exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
-                              nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
-                              nodeZ[0:interpOrderLim], weights[0:interpOrderLim], \
-                              dj[0:interpOrderLim], tt[0:interpOrderLim])
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    int streamID = rand() % 4;
+///    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, clusterX, clusterY, clusterZ, clusterQ) \
+///                       create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
+///                              exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
+///                              nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
+///                              nodeZ[0:interpOrderLim], weights[0:interpOrderLim], \
+///                              dj[0:interpOrderLim], tt[0:interpOrderLim])
+///    {
+///#endif
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
         modifiedF[j] = qS[startingIndexInSourcesArray + j];
         exactIndX[j] = -1;
@@ -274,9 +274,9 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     }
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int i = 0; i < interpOrderLim; i++) {
         tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
@@ -285,26 +285,26 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     }
 
     // Compute weights
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int j = 0; j < interpOrderLim; j++) {
         dj[j] = 1.0;
         if (j == 0) dj[j] = 0.5;
         if (j == interpolationOrder) dj[j] = 0.5;
     }
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int j = 0; j < interpOrderLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
 
     // Compute modified f values
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int i = 0; i < sourcePointsInCluster; i++) { // loop through the source points
 
         double sumX = 0.0;
@@ -315,9 +315,9 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
         double sy = yS[startingIndexInSourcesArray+i];
         double sz = zS[startingIndexInSourcesArray+i];
 
-#ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
-#endif
+///#ifdef OPENACC_ENABLED
+///        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+///#endif
         for (int j = 0; j < (interpolationOrder+1); j++) {  // loop through the degree
 
             double cx = sx - nodeX[j];
@@ -345,9 +345,9 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     }
 
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int j = 0; j < interpolationPointsPerCluster; j++) {
         int k1 = j%(interpolationOrder+1);
         int kk = (j-k1)/(interpolationOrder+1);
@@ -371,9 +371,9 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
 
         // Increment cluster Q array
         double temp = 0.0;
-#ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
-#endif
+///#ifdef OPENACC_ENABLED
+///        #pragma acc loop independent reduction(+:temp)
+///#endif
         for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
             double sx = xS[startingIndexInSourcesArray + i];
             double sy = yS[startingIndexInSourcesArray + i];
@@ -408,9 +408,9 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
         clusterQ[startingIndexInClustersArray + j] += temp;
 
     }
-#ifdef OPENACC_ENABLED
-    } //end acc kernels region
-#endif
+///#ifdef OPENACC_ENABLED
+///    } //end acc kernels region
+///#endif
 
     free_vector(weights);
     free_vector(dj);
@@ -442,17 +442,17 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
     double z0 = tree->z_min[idx];
     double z1 = tree->z_max[idx];
 
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ)
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    int streamID = rand() % 4;
+///    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ)
+///    {
+///#endif
 
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int i = 0; i < interpOrderLim; i++) {
         double tt = cos(i * M_PI / interpolationOrder);
         clusterX[startingIndexInClustersArray + i] = x0 + (tt + 1.0)/2.0 * (x1 - x0);
@@ -460,9 +460,9 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
         clusterZ[startingIndexInClustersArray + i] = z0 + (tt + 1.0)/2.0 * (z1 - z0);
     }
 
-#ifdef OPENACC_ENABLED
-    } //end acc kernels region
-#endif
+///#ifdef OPENACC_ENABLED
+///    } //end acc kernels region
+///#endif
 
     return;
 }

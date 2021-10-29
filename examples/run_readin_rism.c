@@ -119,10 +119,10 @@ int main(int argc, char **argv)
     memset(potential_direct, 0, targets->num * sizeof(double));
 
 
-#ifdef OPENACC_ENABLED
-    #pragma acc set device_num(0) device_type(acc_device_nvidia)
-    #pragma acc init device_type(acc_device_nvidia)
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc set device_num(0) device_type(acc_device_nvidia)
+///    #pragma acc init device_type(acc_device_nvidia)
+///#endif
 
     STOP_TIMER(&time_run[0]);
 

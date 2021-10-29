@@ -91,9 +91,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 /* * ********************************************************/
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device( \
-                source_x, source_y, source_z, source_q, \
-                cluster_x, cluster_y, cluster_z )
+        ///#pragma acc host_data use_device( \
+        ///        source_x, source_y, source_z, source_q, \
+        ///        cluster_x, cluster_y, cluster_z )
         {
 #endif
         for (int j = 0; j < num_approx_in_batch; j++) {
@@ -207,8 +207,8 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 /* * ********************************************************/
 
 #ifdef CUDA_ENABLED
-        #pragma acc host_data use_device( \
-                    source_x, source_y, source_z, source_q)
+      ///  #pragma acc host_data use_device( \
+       ///             source_x, source_y, source_z, source_q)
         {
 #endif
         for (int j = 0; j < num_direct_in_batch; j++) {
@@ -348,9 +348,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #endif
     } // end loop over target batches
 
-#ifdef OPENACC_ENABLED
-    #pragma acc wait
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc wait
+///#endif
 
     return;
 

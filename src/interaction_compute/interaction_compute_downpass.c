@@ -96,10 +96,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         }
 
 
-#ifdef OPENACC_ENABLED
-        #pragma acc update self(cluster_x[0:clusters->num], cluster_y[0:clusters->num], cluster_z[0:clusters->num])
+///#ifdef OPENACC_ENABLED
+///        #pragma acc update self(cluster_x[0:clusters->num], cluster_y[0:clusters->num], cluster_z[0:clusters->num])
 //        #pragma acc enter data copyin(weights[0:interp_order+1])
-#endif
+///#endif
 
         //First go over each level
         for (int i = 0; i < tree->max_depth; ++i) {
@@ -139,11 +139,11 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                     }
                 }
                 
-#ifdef OPENACC_ENABLED
+///#ifdef OPENACC_ENABLED
 //                #pragma acc wait
-                #pragma acc enter data copyin(coeff_x[0:sizeof_coeffs], coeff_y[0:sizeof_coeffs], \
-                                              coeff_z[0:sizeof_coeffs])
-#endif
+///                #pragma acc enter data copyin(coeff_x[0:sizeof_coeffs], coeff_y[0:sizeof_coeffs], \
+///                                              coeff_z[0:sizeof_coeffs])
+///#endif
 
                 //Go over each cluster at that level
                 coeff_start = 0;
@@ -158,10 +158,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                         coeff_start++;
                     }
                 }
-#ifdef OPENACC_ENABLED
-                #pragma acc wait
-                #pragma acc exit data delete(coeff_x, coeff_y, coeff_z)
-#endif
+///#ifdef OPENACC_ENABLED
+///                #pragma acc wait
+///                #pragma acc exit data delete(coeff_x, coeff_y, coeff_z)
+///#endif
                 free_vector(coeff_x);
                 free_vector(coeff_y);
                 free_vector(coeff_z);
@@ -233,11 +233,11 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             }
 
 
-#ifdef OPENACC_ENABLED
-            #pragma acc enter data copyin(coeff_x[0:sizeof_coeff_x], coeff_y[0:sizeof_coeff_y], \
-                                          coeff_z[0:sizeof_coeff_z])
+///#ifdef OPENACC_ENABLED
+///            #pragma acc enter data copyin(coeff_x[0:sizeof_coeff_x], coeff_y[0:sizeof_coeff_y], \
+///                                          coeff_z[0:sizeof_coeff_z])
 //            #pragma acc wait
-#endif
+///#endif
 
             coeff_x_start = 0; coeff_y_start = 0; coeff_z_start = 0;
             for (int i = 0; i < tree->leaves_list_num; ++i) {
@@ -265,10 +265,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 coeff_y_start += tree->y_dim[idx] * (interp_order + 1);
                 coeff_z_start += tree->z_dim[idx] * (interp_order + 1);
             }
-#ifdef OPENACC_ENABLED
-            #pragma acc wait
-            #pragma acc exit data delete(coeff_x, coeff_y, coeff_z)
-#endif
+///#ifdef OPENACC_ENABLED
+///            #pragma acc wait
+///            #pragma acc exit data delete(coeff_x, coeff_y, coeff_z)
+///#endif
 
             free_vector(coeff_x);
             free_vector(coeff_y);
@@ -445,16 +445,16 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
     int coeff_start_ind = interp_order_lim * interp_order_lim * coeff_start;
 
     
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(coeff_x, coeff_y, coeff_z, cluster_q)
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    int streamID = rand() % 4;
+///    #pragma acc kernels async(streamID) present(coeff_x, coeff_y, coeff_z, cluster_q)
+///    {
+///#endif
     
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop gang independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop gang independent
+///#endif
     for (int i = 0; i < interp_pts_per_cluster; i++) { // loop over interpolation points, set (cx,cy,cz) for this point
         int child_k3 = i%interp_order_lim;
         int child_kk = (i-child_k3)/interp_order_lim;
@@ -468,9 +468,9 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
         
         double temp = 0.0;
 
-        #ifdef OPENACC_ENABLED
-                #pragma acc loop vector(32) independent reduction(+:temp)
-        #endif
+   ///     #ifdef OPENACC_ENABLED
+   ///             #pragma acc loop vector(32) independent reduction(+:temp)
+   ///     #endif
         for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
             int k3 = j%interp_order_lim;
             int kk = (j-k3)/interp_order_lim;
@@ -483,15 +483,15 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
 
         }
 
-#ifdef OPENACC_ENABLED
-        #pragma acc atomic
-#endif
+///#ifdef OPENACC_ENABLED
+///        #pragma acc atomic
+///#endif
         cluster_q[child_cluster_charge_start + i] += temp;
     }
 
-#ifdef OPENACC_ENABLED
-    } //end ACC kernels
-#endif
+///#ifdef OPENACC_ENABLED
+///    } //end ACC kernels
+///#endif
     
     return;
 }
@@ -576,15 +576,15 @@ void cp_comp_pot(int idx, double *potential, int interp_order,
     int cluster_charge_start   = idx * interp_pts_per_cluster;
 
 
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(potential, coeff_x, coeff_y, coeff_z, cluster_q) 
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    int streamID = rand() % 4;
+///    #pragma acc kernels async(streamID) present(potential, coeff_x, coeff_y, coeff_z, cluster_q) 
+///    {
+///#endif
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop gang collapse(3) independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop gang collapse(3) independent
+///#endif
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
             for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
@@ -596,9 +596,9 @@ void cp_comp_pot(int idx, double *potential, int interp_order,
                 
                 double temp = 0.0;
 
-        #ifdef OPENACC_ENABLED
-                #pragma acc loop vector(32) independent reduction(+:temp)
-        #endif
+   ///     #ifdef OPENACC_ENABLED
+   ///             #pragma acc loop vector(32) independent reduction(+:temp)
+   ///     #endif
                 for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
                     int k3 = j%interp_order_lim;
                     int kk = (j-k3)/interp_order_lim;
@@ -611,17 +611,17 @@ void cp_comp_pot(int idx, double *potential, int interp_order,
                           * coeff_z[iiz + k3] * cq;
                 }
 
-#ifdef OPENACC_ENABLED
-                #pragma acc atomic
-#endif
+///#ifdef OPENACC_ENABLED
+///                #pragma acc atomic
+///#endif
                 potential[ii] += temp;
             }
         }
     }
 
-#ifdef OPENACC_ENABLED
-    } //end ACC kernels
-#endif
+///#ifdef OPENACC_ENABLED
+///    } //end ACC kernels
+///#endif
 
     return;
 }
@@ -668,22 +668,22 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     double *cluster_q_dxz  = &cluster_q[8*cluster_start + 6*interp_pts_per_cluster];
     double *cluster_q_dxyz = &cluster_q[8*cluster_start + 7*interp_pts_per_cluster];
 
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(potential, \
-                                        cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
-                                        cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
-                                        cluster_q_dxyz) \
-        create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
-               dj[0:interp_order_lim], tt[0:interp_order_lim], ww[0:interp_order_lim], \
-               wx[0:interp_order_lim], wy[0:interp_order_lim], wz[0:interp_order_lim])
-    {
-#endif
+///#ifdef OPENACC_ENABLED
+///    int streamID = rand() % 4;
+///    #pragma acc kernels async(streamID) present(potential, \
+///                                        cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
+///                                        cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
+///                                        cluster_q_dxyz) \
+///        create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
+///               dj[0:interp_order_lim], tt[0:interp_order_lim], ww[0:interp_order_lim], \
+///              wx[0:interp_order_lim], wy[0:interp_order_lim], wz[0:interp_order_lim])
+///    {
+///#endif
     
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int i = 0; i < interp_order_lim; i++) {
         double xx = i * M_PI / interp_order;
         tt[i] =  cos(xx);
@@ -696,9 +696,9 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     ww[interp_order] = -ww[0];
     
     // Compute weights
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop independent
+///#endif
     for (int j = 0; j < interp_order_lim; j++){
         dj[j] = 1.0;
         wx[j] = -4.0 * ww[j] / (target_xmax - target_xmin);
@@ -708,9 +708,9 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     dj[0] = 0.25;
     dj[interp_order] = 0.25;
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop collapse(3) independent
-#endif
+///#ifdef OPENACC_ENABLED
+///    #pragma acc loop collapse(3) independent
+///#endif
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
             for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
@@ -729,9 +729,9 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
                 int eiy = -1;
                 int eiz = -1;
 
-#ifdef OPENACC_ENABLED
-                #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
-#endif
+///#ifdef OPENACC_ENABLED
+///                #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
+///#endif
                 for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 
                     double cx =  tx - nodeX[j];
@@ -756,9 +756,9 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
         
                 double temp = 0.0;
         
-#ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:temp)
-#endif
+///#ifdef OPENACC_ENABLED
+///                #pragma acc loop vector independent reduction(+:temp)
+///#endif
                 for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
                     int k1 = j%interp_order_lim;
@@ -863,16 +863,16 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
                                         +  numerator6 * cqdxz  +  numerator7 * cqdxyz);
                 }
                 
-        #ifdef OPENACC_ENABLED
-                #pragma acc atomic
-        #endif
+   ///     #ifdef OPENACC_ENABLED
+   ///             #pragma acc atomic
+   ///     #endif
                 potential[ii] += temp;
             }
         }
     }
-#ifdef OPENACC_ENABLED
-    } //end ACC kernels
-#endif
+///#ifdef OPENACC_ENABLED
+///    } //end ACC kernels
+///#endif
     
     free_vector(dj);
     free_vector(tt);
