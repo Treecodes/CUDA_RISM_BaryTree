@@ -43,7 +43,6 @@ static void CUDA_TCF_PP(
             }
         }
         d_potential[ii] = temporary_potential;
-        printf("kernel potential %10d %15.6e\n", ii, d_potential[ii]);
     }
 
     return;
@@ -52,6 +51,7 @@ static void CUDA_TCF_PP(
 
 __host__
 void K_CUDA_TCF_PP(
+    int call_type,         int num_source,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,
@@ -60,13 +60,47 @@ void K_CUDA_TCF_PP(
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
     int cluster_num_sources, int cluster_idx_start,
     double *source_x, double *source_y, double *source_z, double *source_q,
-    struct RunParams *run_params, double *potential, int gpu_async_stream_id)
+    struct RunParams *run_params, double *potential)
 {
     double kap = run_params->kernel_params[0];
     double eta = run_params->kernel_params[1];
     double kap_eta_2 = kap * eta / 2.0;
 
+    double *d_source_x;
+    double *d_source_y; 
+    double *d_source_z;
+    double *d_source_q;
+
+    printf("CUDA received call_type: %d\n", call_type);
     cudaError_t cudaErr;
+    if ( call_type == 1 ) {
+        cudaErr = cudaMalloc(&d_source_x, sizeof(double)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_source_y, sizeof(double)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_source_z, sizeof(double)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_source_q, sizeof(double)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+        cudaErr = cudaMemcpy(d_source_x, source_x, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_source_y, source_y, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_source_z, source_z, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        printf("CUDA copied data into device %d\n", num_source);
+    }
 
     int target_x_dim = target_x_high_ind - target_x_low_ind + 1;
     int target_y_dim = target_y_high_ind - target_y_low_ind + 1;
@@ -94,7 +128,7 @@ void K_CUDA_TCF_PP(
                                     target_yz_dim, target_z_dim,
                                     target_xmin, target_ymin, target_zmin,
                                     target_xdd, target_ydd, target_zdd,
-                                    source_x, source_y, source_z, source_q, d_potential);
+                                    d_source_x, d_source_y, d_source_z, d_source_q, d_potential);
     cudaErr = cudaDeviceSynchronize();
     if ( cudaErr != cudaSuccess )
         printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -123,6 +157,12 @@ void K_CUDA_TCF_PP(
     }
     cudaFree(h_potential);
     cudaFree(d_potential);
+    if ( call_type == 2 ) {
+        cudaFree(d_source_x);
+        cudaFree(d_source_y);
+        cudaFree(d_source_z);
+        cudaFree(d_source_q);
+    }
 
     return;
 }

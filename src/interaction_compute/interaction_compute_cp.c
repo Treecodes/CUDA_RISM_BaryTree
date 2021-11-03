@@ -98,6 +98,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
             int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
+
             int stream_id = j%3;
 
 #ifdef CUDA_ENABLED
@@ -225,9 +226,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             double target_y_min = target_tree_y_min[node_index];
             double target_z_min = target_tree_z_min[node_index];
 
-
             int stream_id = j%3;
 
+#ifdef CUDA_ENABLED
+            int call_type = 0;
+            if ( j == 0 ) call_type = 1;
+            if ( j == num_direct_in_batch - 1) call_type = 2;
+#endif
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -274,8 +279,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-                //K_CUDA_TCF_PP(
-                K_TCF_PP(
+                K_CUDA_TCF_PP(
+                    call_type, num_source,
+
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
                     target_z_low_ind, target_z_high_ind,
@@ -287,7 +293,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, potential, stream_id);
+                    run_params, potential);
 #else
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
