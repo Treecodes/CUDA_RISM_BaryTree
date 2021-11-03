@@ -47,24 +47,11 @@ void InteractionCompute_Direct(double *potential,
     int target_ydim = targets->ydim;
     int target_zdim = targets->zdim;
 
-///#ifdef OPENACC_ENABLED
-///    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], \
-                            source_z[0:num_sources], source_q[0:num_sources]) 
-///    {
-///#endif
-
 /* * ********************************************************/
 /* * ************** COMPLETE DIRECT SUM *********************/
 /* * ********************************************************/
 
 
-#ifdef CUDA_ENABLED
-///    #pragma acc host_data use_device( \
-  ///              source_x, source_y, source_z, source_q)
-    {
-    //int target_xyz_dim = target_xdim * target_ydim * target_zdim;
-    //CUDA_Setup_PP(target_xyz_dim);
-#endif
     /* * *************************************/
     /* * ******* Coulomb *********************/
     /* * *************************************/
@@ -72,7 +59,8 @@ void InteractionCompute_Direct(double *potential,
     if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-        K_CUDA_Coulomb_PP(
+        //K_CUDA_Coulomb_PP(
+        K_Coulomb_PP(
             0,  target_xdim-1,
             0,  target_ydim-1,
             0,  target_zdim-1,
@@ -109,7 +97,8 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-        K_CUDA_TCF_PP(
+        //K_CUDA_TCF_PP(
+        K_TCF_PP(
             0,  target_xdim-1,
             0,  target_ydim-1,
             0,  target_zdim-1,
@@ -146,7 +135,8 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
-        K_CUDA_DCF_PP(
+        //K_CUDA_DCF_PP(
+        K_DCF_PP(
             0,  target_xdim-1,
             0,  target_ydim-1,
             0,  target_zdim-1,
@@ -176,16 +166,6 @@ void InteractionCompute_Direct(double *potential,
 #endif
                         
     }
-
-#ifdef CUDA_ENABLED
-    //CUDA_Cleanup_PP(target_xyz_dim, potential);
-    }
-#endif
-
-///#ifdef OPENACC_ENABLED
-///    #pragma acc wait
-///    } // end acc data region
-///#endif
 
     //int target_yzdim = target_ydim*target_zdim;
     //for (int ix = 0; ix <= target_xdim-1; ix++) {

@@ -23,11 +23,6 @@ void K_TCF_PP(
     double kap_eta_2 = kap * eta / 2.0;
     int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
-#ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, potential)
-    {
-    #pragma acc loop gang collapse(3) independent
-#endif
     //printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
     //printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
     //printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
@@ -47,16 +42,7 @@ void K_TCF_PP(
                 double ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
                 double tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
 
-#ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:temporary_potential)
-#endif
                 for (int j = 0; j < cluster_num_sources; j++) {
-#ifdef OPENACC_ENABLED
-                #pragma acc cache(source_x[cluster_idx_start : cluster_idx_start+cluster_num_sources], \
-                                  source_y[cluster_idx_start : cluster_idx_start+cluster_num_sources], \
-                                  source_z[cluster_idx_start : cluster_idx_start+cluster_num_sources], \
-                                  source_q[cluster_idx_start : cluster_idx_start+cluster_num_sources])
-#endif
 
                     int jj = cluster_idx_start + j;
                     double dx = tx - source_x[jj];
@@ -72,16 +58,10 @@ void K_TCF_PP(
                                              -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
                     }
                 } // end loop over interpolation points
-#ifdef OPENACC_ENABLED
-                #pragma acc atomic
-#endif
                 potential[ii] += temporary_potential;
                 //printf("direct potential, %d %15.6e\n", ii, potential[ii]);
             }
         }
     }
-#ifdef OPENACC_ENABLED
-    } // end kernel
-#endif
     return;
 }

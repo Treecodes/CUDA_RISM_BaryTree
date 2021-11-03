@@ -16,14 +16,6 @@ void K_Coulomb_CP_Lagrange(
     double eta = run_params->kernel_params[1];
     double kap_eta_2 = kap * eta / 2.0;
 
-#ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, \
-                        cluster_x, cluster_y, cluster_z, cluster_q)
-    {
-#endif
-#ifdef OPENACC_ENABLED
-    #pragma acc loop gang collapse(3) independent
-#endif	
     for (int k1 = 0; k1 < interp_order_lim; k1++) {
     for (int k2 = 0; k2 < interp_order_lim; k2++) {
     for (int k3 = 0; k3 < interp_order_lim; k3++) {
@@ -36,16 +28,7 @@ void K_Coulomb_CP_Lagrange(
 
         int ii = cluster_q_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
 
-#ifdef OPENACC_ENABLED
-        #pragma acc loop vector independent reduction(+:temporary_potential)
-#endif
         for (int j = 0; j < batch_num_sources; j++) {
-#ifdef OPENACC_ENABLED
-            #pragma acc cache(source_x[batch_idx_start : batch_idx_start+batch_num_sources], \
-                              source_y[batch_idx_start : batch_idx_start+batch_num_sources], \
-                              source_z[batch_idx_start : batch_idx_start+batch_num_sources], \
-                              source_q[batch_idx_start : batch_idx_start+batch_num_sources])
-#endif
 
             int jj = batch_idx_start + j;
             double dx = cx - source_x[jj];
@@ -55,65 +38,15 @@ void K_Coulomb_CP_Lagrange(
 
             temporary_potential += source_q[jj] / r;
         }
-#ifdef OPENACC_ENABLED
-        #pragma acc atomic
-#endif
         cluster_q[ii] += temporary_potential;
         //printf("old %15.6e\n", cluster_q[ii]);
     }
     }
     }
-#ifdef OPENACC_ENABLED
-    } // end kernel
-#endif
-    return;
-}
-
-
-void test_flat(
-    int batch_num_sources, int batch_idx_start,
-    int cluster_q_start, int cluster_pts_start,
-    int interp_order_lim,
-    double *source_x, double *source_y, double *source_z, double *source_q,
-    double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-    struct RunParams *run_params, int gpu_async_stream_id)
-{
-    double kap = run_params->kernel_params[0];
-    double eta = run_params->kernel_params[1];
-    double kap_eta_2 = kap * eta / 2.0;
-
-    int cid_lim2 = interp_order_lim*interp_order_lim;
-    int cid_lim3 = interp_order_lim*cid_lim2;
-    double *temporary_potential;
-    temporary_potential = (double*) malloc(sizeof(double)*batch_num_sources * cid_lim3);
-    for (int fid = 0; fid < batch_num_sources * cid_lim3; fid++) {
-        int cid = fid/batch_num_sources;
-        int j = fid-cid*batch_num_sources;
-        int k1 = cid/cid_lim2; int tmp = cid - k1*cid_lim2;
-        int k2 = tmp/interp_order_lim;
-        int k3 = tmp%interp_order_lim;
-        double cx = cluster_x[cluster_pts_start + k1];
-        double cy = cluster_y[cluster_pts_start + k2];
-        double cz = cluster_z[cluster_pts_start + k3];
-
-        int jj = batch_idx_start + j;
-        double dx = cx - source_x[jj];
-        double dy = cy - source_y[jj];
-        double dz = cz - source_z[jj];
-        double r = sqrt(dx*dx + dy*dy + dz*dz);
-        temporary_potential[j+batch_num_sources*cid] = source_q[jj] / r;
-    }
-    for (int cid = 0; cid < cid_lim3; cid++) {
-        int ii = cluster_q_start + cid;
-        for (int j = 0; j < batch_num_sources; j++) {
-            cluster_q[ii] += temporary_potential[j+batch_num_sources*cid];
-        } 
-        //printf("new %15.6e\n", cluster_q[ii]);
-    } // end collect
-      free(temporary_potential);
 
     return;
 }
+
 
 /*
 void K_Coulomb_CP_Hermite(
