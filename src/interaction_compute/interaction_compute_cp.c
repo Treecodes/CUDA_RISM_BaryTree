@@ -32,11 +32,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     int cluster_num_interp_pts = run_params->interp_pts_per_cluster;
     int interp_order_lim = run_params->interp_order+1;
 
+    int num_source = sources->num;
     double *source_x  = sources->x;
     double *source_y  = sources->y;
     double *source_z  = sources->z;
     double *source_q  = sources->q;
 
+    int num_cluster = clusters->num;
     double *cluster_x = clusters->x;
     double *cluster_y = clusters->y;
     double *cluster_z = clusters->z;
@@ -98,6 +100,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
             int stream_id = j%3;
 
+#ifdef CUDA_ENABLED
+            int call_type = 0;
+            if ( j == 0 ) call_type = 1;
+            if ( j == num_approx_in_batch - 1) call_type = 2;
+#endif
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -108,14 +115,14 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                    //K_CUDA_Coulomb_CP_Lagrange(
-                    K_Coulomb_CP_Lagrange(
+                    K_CUDA_Coulomb_CP_Lagrange(
+                        call_type, num_source, num_cluster,
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
                         interp_order_lim,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
-                        run_params, stream_id);
+                        run_params);
 #else
                     K_Coulomb_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -140,14 +147,14 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                    //K_CUDA_TCF_CP_Lagrange(
-                    K_TCF_CP_Lagrange(
+                    K_CUDA_TCF_CP_Lagrange(
+                        call_type, num_source, num_cluster,
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
                         interp_order_lim,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
-                        run_params, stream_id);
+                        run_params);
 #else
                     K_TCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -172,14 +179,14 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                    //K_CUDA_DCF_CP_Lagrange(
-                    K_DCF_CP_Lagrange(
+                    K_CUDA_DCF_CP_Lagrange(
+                        call_type, num_source, num_cluster,
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
                         interp_order_lim,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
-                        run_params, stream_id);
+                        run_params);
 #else
                     K_DCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -340,6 +347,31 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
         } // end loop over number of direct interactions
 
     } // end loop over target batches
+
+    // debugging cluster potentials
+    //for (int i = 0; i < batches->numnodes; i++) {
+    //    int num_approx_in_batch = num_approx[i];
+    //    for (int j = 0; j < num_approx_in_batch; j++) {
+    //        int node_index = approx_inter_list[i][j];
+    //        int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
+    //        for (int ii = cluster_q_start;
+    //            ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
+    //            printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
+    //         }
+    //    }
+    //}
+
+    // debugging direct potentials
+    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+    printf(":::: grid no    ::::, %10d \n", target_x_dim_glob*target_yzdim);
+    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
+    for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
+    for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
+        int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
+        printf("direct potential, %d %15.6e\n", ii, potential[ii]);
+    }
+    }
+    }
 
     return;
 
