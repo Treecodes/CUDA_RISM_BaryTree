@@ -295,6 +295,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     run_params, potential);
 #else
+//for (int i = 0; i<num_source; i++) {
+//printf("source: %15.6e %15.6e %15.6e %15.6e\n", source_x[i], source_y[i], source_z[i], source_q[i]);
+//}
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -368,16 +371,16 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     //}
 
     // debugging direct potentials
-    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-    printf(":::: grid no    ::::, %10d \n", target_x_dim_glob*target_yzdim);
-    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
-    for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
-    for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-        int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-        printf("direct potential, %d %15.6e\n", ii, potential[ii]);
-    }
-    }
-    }
+    //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+    //printf(":::: grid no    ::::, %10d \n", target_x_dim_glob*target_yzdim);
+    //for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
+    //for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
+    //for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
+    //    int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
+    //    printf("direct potential, %d %15.6e\n", ii, potential[ii]);
+    //}
+    //}
+    //}
 
     return;
 

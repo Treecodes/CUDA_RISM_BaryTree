@@ -73,7 +73,7 @@ void K_CUDA_TCF_PP(
 
     printf("CUDA received call_type: %d\n", call_type);
     cudaError_t cudaErr;
-    if ( call_type == 1 ) {
+    if ( call_type == 1 || call_type == 3 ) {
         cudaErr = cudaMalloc(&d_source_x, sizeof(double)*num_source);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -101,6 +101,9 @@ void K_CUDA_TCF_PP(
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         printf("CUDA copied data into device %d\n", num_source);
     }
+//for (int i = 0; i<num_source; i++) {
+//printf("source: %15.6e %15.6e %15.6e %15.6e\n", source_x[i], source_y[i], source_z[i], source_q[i]);
+//}
 
     int target_x_dim = target_x_high_ind - target_x_low_ind + 1;
     int target_y_dim = target_y_high_ind - target_y_low_ind + 1;
@@ -117,7 +120,7 @@ void K_CUDA_TCF_PP(
     if ( cudaErr != cudaSuccess )
         printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-    int threadsperblock = 8;
+    int threadsperblock = 4;
     dim3 nthreads(threadsperblock, threadsperblock, threadsperblock);
     dim3 nblocks((target_x_dim-1)/threadsperblock + 1,
                  (target_y_dim-1)/threadsperblock + 1,
@@ -139,9 +142,9 @@ void K_CUDA_TCF_PP(
         printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
     int target_yz_dim_glob = target_y_dim_glob * target_z_dim_glob;
-    //printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
-    //printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
-    //printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
+    printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
+    printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
+    printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
     for (int ix_glob = target_x_low_ind; ix_glob <= target_x_high_ind; ix_glob++) {
     for (int iy_glob = target_y_low_ind; iy_glob <= target_y_high_ind; iy_glob++) {
     for (int iz_glob = target_z_low_ind; iz_glob <= target_z_high_ind; iz_glob++) {
@@ -151,13 +154,13 @@ void K_CUDA_TCF_PP(
         int iz = iz_glob - target_z_low_ind; 
         int ii = (ix * target_yz_dim) + (iy * target_z_dim ) + iz;
         potential[ii_glob] += h_potential[ii];
-        //printf("direct potential, %d %15.6e\n", ii_glob, h_potential[ii]);
+        printf("direct potential, %d %15.6e\n", ii, h_potential[ii]);
     }
     }
     }
     cudaFree(h_potential);
     cudaFree(d_potential);
-    if ( call_type == 2 ) {
+    if ( call_type == 2 || call_type == 3 ) {
         cudaFree(d_source_x);
         cudaFree(d_source_y);
         cudaFree(d_source_z);

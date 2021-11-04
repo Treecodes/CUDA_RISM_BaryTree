@@ -47,6 +47,10 @@ void InteractionCompute_Direct(double *potential,
     int target_ydim = targets->ydim;
     int target_zdim = targets->zdim;
 
+#ifdef CUDA_ENABLED
+    int call_type = 3;
+#endif
+
 /* * ********************************************************/
 /* * ************** COMPLETE DIRECT SUM *********************/
 /* * ********************************************************/
@@ -97,8 +101,9 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-        //K_CUDA_TCF_PP(
-        K_TCF_PP(
+        K_CUDA_TCF_PP(
+            call_type, num_sources,
+
             0,  target_xdim-1,
             0,  target_ydim-1,
             0,  target_zdim-1,
@@ -110,7 +115,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, potential, 0);
+            run_params, potential);
 #else
         K_TCF_PP(
             0,  target_xdim-1,
