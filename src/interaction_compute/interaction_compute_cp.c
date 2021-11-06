@@ -241,8 +241,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-                //K_CUDA_Coulomb_PP(
-                K_Coulomb_PP(
+                K_CUDA_Coulomb_PP(
+                    call_type, num_source,
+
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
                     target_z_low_ind, target_z_high_ind,
@@ -254,7 +255,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, potential, stream_id);
+                    run_params, potential);
 #else
                 K_Coulomb_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -295,9 +296,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     run_params, potential);
 #else
-//for (int i = 0; i<num_source; i++) {
-//printf("source: %15.6e %15.6e %15.6e %15.6e\n", source_x[i], source_y[i], source_z[i], source_q[i]);
-//}
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -321,8 +319,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
-                //K_CUDA_DCF_PP(
-                K_DCF_PP(
+                K_CUDA_DCF_PP(
+                    call_type, num_source,
+
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
                     target_z_low_ind, target_z_high_ind,
@@ -334,7 +333,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, potential, stream_id);
+                    run_params, potential);
 #else
                 K_DCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -358,17 +357,17 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     } // end loop over target batches
 
     // debugging cluster potentials
-    //for (int i = 0; i < batches->numnodes; i++) {
-    //    int num_approx_in_batch = num_approx[i];
-    //    for (int j = 0; j < num_approx_in_batch; j++) {
-    //        int node_index = approx_inter_list[i][j];
-    //        int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
-    //        for (int ii = cluster_q_start;
-    //            ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
-    //            printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
-    //         }
-    //    }
-    //}
+    for (int i = 0; i < batches->numnodes; i++) {
+        int num_approx_in_batch = num_approx[i];
+        for (int j = 0; j < num_approx_in_batch; j++) {
+            int node_index = approx_inter_list[i][j];
+            int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
+            for (int ii = cluster_q_start;
+                ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
+                printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
+             }
+        }
+    }
 
     // debugging direct potentials
     //int target_yzdim = target_y_dim_glob*target_z_dim_glob;

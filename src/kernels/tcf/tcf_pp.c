@@ -23,9 +23,9 @@ void K_TCF_PP(
     double kap_eta_2 = kap * eta / 2.0;
     int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
-    printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
-    printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
-    printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
+    //printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
+    //printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
+    //printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
             for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
@@ -54,7 +54,7 @@ void K_TCF_PP(
                     }
                 } // end loop over interpolation points
                 potential[ii] += temporary_potential;
-                printf("direct potential, %d %15.6e\n", ii, potential[ii]);
+                //printf("direct potential, %d %15.6e\n", ii, potential[ii]);
             }
         }
     }

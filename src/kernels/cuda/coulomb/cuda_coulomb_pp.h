@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 void K_CUDA_Coulomb_PP(
+    int call_type,         int num_source,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,
@@ -19,7 +20,7 @@ void K_CUDA_Coulomb_PP(
     int number_of_source_points_in_cluster, int starting_index_of_source,
     double *source_x, double *source_y, double *source_z, double *source_q,
 
-    struct RunParams *run_params, double *potential, int gpu_async_stream_id);
+    struct RunParams *run_params, double *potential);
 #ifdef __CUDACC__
 }
 #endif
