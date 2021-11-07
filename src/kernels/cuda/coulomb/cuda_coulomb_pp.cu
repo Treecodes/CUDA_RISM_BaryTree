@@ -144,14 +144,14 @@ void K_CUDA_Coulomb_PP(
         int iz = iz_glob - target_z_low_ind;
         int ii = (ix * target_yz_dim) + (iy * target_z_dim ) + iz;
         potential[ii_glob] += h_potential[ii];
-        printf("direct potential, %d %15.6e\n", ii_glob, potential[ii_glob]);
+        printf("direct potential, %d %15.6e\n", ii_glob, h_potential[ii]);
     }
     }
     }
 
     cudaFree(h_potential);
     cudaFree(d_potential);
-    if ( call_type == 2 || call_type == 3 ) {
+    if ( call_type == 1 || call_type == 3 ) {
         cudaFree(d_source_x);
         cudaFree(d_source_y);
         cudaFree(d_source_z);

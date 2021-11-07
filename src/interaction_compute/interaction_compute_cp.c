@@ -241,6 +241,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
+                int call_type = 1;
                 K_CUDA_Coulomb_PP(
                     call_type, num_source,
 
@@ -319,6 +320,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
+                int call_type = 1;
                 K_CUDA_DCF_PP(
                     call_type, num_source,
 
@@ -357,17 +359,17 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     } // end loop over target batches
 
     // debugging cluster potentials
-    for (int i = 0; i < batches->numnodes; i++) {
-        int num_approx_in_batch = num_approx[i];
-        for (int j = 0; j < num_approx_in_batch; j++) {
-            int node_index = approx_inter_list[i][j];
-            int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
-            for (int ii = cluster_q_start;
-                ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
-                printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
-             }
-        }
-    }
+    //for (int i = 0; i < batches->numnodes; i++) {
+    //    int num_approx_in_batch = num_approx[i];
+    //    for (int j = 0; j < num_approx_in_batch; j++) {
+    //        int node_index = approx_inter_list[i][j];
+    //        int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
+    //        for (int ii = cluster_q_start;
+    //            ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
+    //            printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
+    //         }
+    //    }
+    //}
 
     // debugging direct potentials
     //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
