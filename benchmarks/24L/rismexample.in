@@ -1,0 +1,16 @@
+file_pqr            ./24L_rism.txt
+
+num_sources         1518
+xyz_limits          0,188.5,0,215.5,0,431.5   
+grid_dim            240,252,432     
+order               1        
+theta               0.9
+max_per_source_leaf 256           
+max_per_target_leaf 2000           
+kernel_name         tcf      
+kernel_params       0.147060186780752,1  
+approximation       lagrange
+compute_type        cluster-particle     
+run_direct          1
+slice               2,4,4 
+verbosity           1    

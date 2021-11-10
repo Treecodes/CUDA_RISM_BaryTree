@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# script loops throught orders 1,2,4,6,8,10,12,14 for a given theta
+#replace pathway to executable
+# example ./rism_submission 0.9
+   
+
+echo $1
+for ((  i = 0 ;  i <= 7;  i++  ))
+ do
+  echo $i
+  if [ $i -eq 0 ]; then
+     j=1
+  else 
+     j=$((2*i))
+  fi 
+  echo $j
+   sed "s/theta               0.9/theta               $1/" ./rismexample.in >rismexample.temp
+   sed "s/order               1/order               $j/" ./rismexample.temp >rismexample_$j.in
+   /home/ewa19/RISM/barytree/CUDA_VERSION/BaryTree/build/bin/run_readin_rism_gpu rismexample_$j.in >gpu_tcf_$j.out
+   wait $pid
+   rm rismexample.temp
+ done
+
+
+
+
+
+
+
+
+
+
+
+
