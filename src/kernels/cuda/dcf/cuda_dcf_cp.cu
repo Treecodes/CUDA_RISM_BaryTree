@@ -51,7 +51,7 @@ void K_CUDA_DCF_CP_Lagrange(
     double *d_cluster_y;
     double *d_cluster_z;
 
-    printf("CUDA received call_type: %d\n", call_type);
+   // printf("CUDA received call_type: %d\n", call_type);
     cudaError_t cudaErr;
     if ( call_type == 1 ) {
         cudaErr = cudaMalloc(&d_source_x, sizeof(double)*num_source);
@@ -98,7 +98,7 @@ void K_CUDA_DCF_CP_Lagrange(
         cudaErr = cudaMemcpy(d_cluster_z, cluster_z, sizeof(double)*num_cluster, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        printf("CUDA copied data into device %d %d\n", num_source, num_cluster);
+     //   printf("CUDA copied data into device %d %d\n", num_source, num_cluster);
     }
 
     double *h_temporary_potential, *d_temporary_potential;

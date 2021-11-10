@@ -64,7 +64,7 @@ void K_CUDA_Coulomb_PP(
     double *d_source_z;
     double *d_source_q;
 
-    printf("CUDA received call_type: %d\n", call_type);
+  //  printf("CUDA received call_type: %d\n", call_type);
     cudaError_t cudaErr;
     if ( call_type == 1 || call_type == 3 ) {
         cudaErr = cudaMalloc(&d_source_x, sizeof(double)*num_source);
@@ -92,7 +92,7 @@ void K_CUDA_Coulomb_PP(
         cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(double)*num_source, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        printf("CUDA copied data into device %d\n", num_source);
+//        printf("CUDA copied data into device %d\n", num_source);
     }
 
     int target_x_dim = target_x_high_ind - target_x_low_ind + 1;
@@ -132,9 +132,9 @@ void K_CUDA_Coulomb_PP(
         printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
     int target_yz_dim_glob = target_y_dim_glob * target_z_dim_glob;
-    printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
-    printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
-    printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
+   // printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
+  //  printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
+  //  printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
     for (int ix_glob = target_x_low_ind; ix_glob <= target_x_high_ind; ix_glob++) {
     for (int iy_glob = target_y_low_ind; iy_glob <= target_y_high_ind; iy_glob++) {
     for (int iz_glob = target_z_low_ind; iz_glob <= target_z_high_ind; iz_glob++) {
@@ -144,7 +144,7 @@ void K_CUDA_Coulomb_PP(
         int iz = iz_glob - target_z_low_ind;
         int ii = (ix * target_yz_dim) + (iy * target_z_dim ) + iz;
         potential[ii_glob] += h_potential[ii];
-        printf("direct potential, %d %15.6e\n", ii_glob, h_potential[ii]);
+    //    printf("direct potential, %d %15.6e\n", ii_glob, h_potential[ii]);
     }
     }
     }
