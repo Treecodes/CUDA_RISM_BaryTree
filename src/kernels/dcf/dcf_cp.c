@@ -39,7 +39,7 @@ void K_DCF_CP_Lagrange(
             temporary_potential += source_q[jj] * erf(r / eta) / r;
         }
         cluster_q[ii] += temporary_potential;
-        //printf("old %i %15.6e\n", ii, cluster_q[ii]);
+        //printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
     }
     }
     }

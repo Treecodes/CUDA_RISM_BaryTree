@@ -14,12 +14,6 @@
 #include "../kernels/tcf/tcf.h"
 #include "../kernels/dcf/dcf.h"
 
-#ifdef CUDA_ENABLED
-    #include "../kernels/cuda/coulomb/cuda_coulomb.h"
-    #include "../kernels/cuda/tcf/cuda_tcf.h"
-    #include "../kernels/cuda/dcf/cuda_dcf.h"
-#endif
-
 #include "interaction_compute.h"
 
 

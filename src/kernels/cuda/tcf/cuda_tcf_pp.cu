@@ -2,18 +2,26 @@
 #include <float.h>
 #include <stdio.h>
 
+#define SINGLE
+
+#ifdef SINGLE
+    #define FLOAT float
+#else
+    #define FLOAT double
+#endif
+
 #include "cuda_tcf_pp.h"
 
 __global__ 
 static void CUDA_TCF_PP(
-    double eta, double kap, double kap_eta_2, int cluster_num_sources, int cluster_idx_start,
+    FLOAT eta, FLOAT kap, FLOAT kap_eta_2, int cluster_num_sources, int cluster_idx_start,
     int target_x_low_ind, int target_y_low_ind, int target_z_low_ind,
     int target_x_high_ind, int target_y_high_ind, int target_z_high_ind,
     int target_yz_dim, int target_z_dim,
-    double target_xmin, double target_ymin, double target_zmin,
-    double target_xdd, double target_ydd, double target_zdd,
-    double *source_x, double *source_y, double *source_z, double *source_q,
-    double *d_potential)
+    FLOAT target_xmin, FLOAT target_ymin, FLOAT target_zmin,
+    FLOAT target_xdd, FLOAT target_ydd, FLOAT target_zdd,
+    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
+    FLOAT *d_potential)
 {
     int ix = threadIdx.x + blockDim.x * blockIdx.x;
     int iy = threadIdx.y + blockDim.y * blockIdx.y;
@@ -23,21 +31,21 @@ static void CUDA_TCF_PP(
         iy >= target_y_low_ind && iy <= target_y_high_ind &&
         iz >= target_z_low_ind && iz <= target_z_high_ind){
 
-        double tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
-        double ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
-        double tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
+        FLOAT tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
+        FLOAT ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
+        FLOAT tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
         int ii = (ix * target_yz_dim) + (iy * target_z_dim) + iz;
-        double temporary_potential = 0.0;
+        FLOAT temporary_potential = 0.0;
         for (int j=0; j < cluster_num_sources; j++){
 
             int jj = cluster_idx_start + j;
-            double dx = tx - source_x[jj];
-            double dy = ty - source_y[jj];
-            double dz = tz - source_z[jj];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz);
+            FLOAT dx = tx - source_x[jj];
+            FLOAT dy = ty - source_y[jj];
+            FLOAT dz = tz - source_z[jj];
+            FLOAT r  = sqrt(dx*dx + dy*dy + dz*dz);
             if (r > DBL_MIN) {
-                double kap_r = kap *r;
-                double r_eta = r / eta;
+                FLOAT kap_r = kap * r;
+                FLOAT r_eta = r / eta;
                 temporary_potential += source_q[jj] / r * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
                                      - exp(kap_r) * erfc(kap_eta_2 + r_eta));
             }
@@ -55,48 +63,48 @@ void K_CUDA_TCF_PP(
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,
-    double target_xmin,    double target_ymin,    double target_zmin,
-    double target_xdd,     double target_ydd,     double target_zdd,
+    FLOAT target_xmin,    FLOAT target_ymin,    FLOAT target_zmin,
+    FLOAT target_xdd,     FLOAT target_ydd,     FLOAT target_zdd,
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
     int cluster_num_sources, int cluster_idx_start,
-    double *source_x, double *source_y, double *source_z, double *source_q,
+    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
     struct RunParams *run_params, double *potential)
 {
-    double kap = run_params->kernel_params[0];
-    double eta = run_params->kernel_params[1];
-    double kap_eta_2 = kap * eta / 2.0;
+    FLOAT kap = (FLOAT)run_params->kernel_params[0];
+    FLOAT eta = (FLOAT)run_params->kernel_params[1];
+    FLOAT kap_eta_2 = kap * eta / 2.0;
 
-    double *d_source_x;
-    double *d_source_y; 
-    double *d_source_z;
-    double *d_source_q;
+    FLOAT *d_source_x;
+    FLOAT *d_source_y; 
+    FLOAT *d_source_z;
+    FLOAT *d_source_q;
 
     //printf("CUDA received call_type: %d\n", call_type);
     cudaError_t cudaErr;
     if ( call_type == 1 || call_type == 3 ) {
-        cudaErr = cudaMalloc(&d_source_x, sizeof(double)*num_source);
+        cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_y, sizeof(double)*num_source);
+        cudaErr = cudaMalloc(&d_source_y, sizeof(FLOAT)*num_source);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_z, sizeof(double)*num_source);
+        cudaErr = cudaMalloc(&d_source_z, sizeof(FLOAT)*num_source);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_q, sizeof(double)*num_source);
+        cudaErr = cudaMalloc(&d_source_q, sizeof(FLOAT)*num_source);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-        cudaErr = cudaMemcpy(d_source_x, source_x, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        cudaErr = cudaMemcpy(d_source_x, source_x, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_y, source_y, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        cudaErr = cudaMemcpy(d_source_y, source_y, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_z, source_z, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        cudaErr = cudaMemcpy(d_source_z, source_z, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(double)*num_source, cudaMemcpyHostToDevice);
+        cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         //printf("CUDA copied data into device %d\n", num_source);
@@ -108,12 +116,12 @@ void K_CUDA_TCF_PP(
     int target_yz_dim = target_y_dim * target_z_dim;
     int target_xyz_dim = target_x_dim * target_yz_dim;
 
-    double *h_potential;
-    double *d_potential;
-    cudaErr = cudaMallocHost(&h_potential, sizeof(double)*target_xyz_dim);
+    FLOAT *h_potential;
+    FLOAT *d_potential;
+    cudaErr = cudaMallocHost(&h_potential, sizeof(FLOAT)*target_xyz_dim);
     if ( cudaErr != cudaSuccess )
         printf("Host malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-    cudaErr = cudaMalloc(&d_potential, sizeof(double)*target_xyz_dim);
+    cudaErr = cudaMalloc(&d_potential, sizeof(FLOAT)*target_xyz_dim);
     if ( cudaErr != cudaSuccess )
         printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
@@ -134,7 +142,7 @@ void K_CUDA_TCF_PP(
         printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
     cudaErr = cudaMemcpy(h_potential, d_potential,
-                         target_xyz_dim * sizeof(double), cudaMemcpyDeviceToHost);
+                         target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
     if ( cudaErr != cudaSuccess )
         printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
@@ -151,7 +159,7 @@ void K_CUDA_TCF_PP(
         int iz = iz_glob - target_z_low_ind; 
         int ii = (ix * target_yz_dim) + (iy * target_z_dim ) + iz;
         potential[ii_glob] += h_potential[ii];
-        //printf("direct potential, %d %15.6e\n", ii_glob, potential[ii_glob]);
+        //printf("direct potential, %d %15.6e\n", ii_glob, h_potential[ii]);
     }
     }
     }
