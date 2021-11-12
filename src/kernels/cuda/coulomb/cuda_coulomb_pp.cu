@@ -72,7 +72,7 @@ void K_CUDA_Coulomb_PP(
     FLOAT *d_source_z;
     FLOAT *d_source_q;
 
-    printf("CUDA received call_type: %d\n", call_type);
+    //printf("CUDA received call_type: %d\n", call_type);
     cudaError_t cudaErr;
     if ( call_type == 1 || call_type == 3 ) {
         cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
@@ -100,7 +100,7 @@ void K_CUDA_Coulomb_PP(
         cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        printf("CUDA copied data into device %d\n", num_source);
+        //printf("CUDA copied data into device %d\n", num_source);
     }
 
     int target_x_dim = target_x_high_ind - target_x_low_ind + 1;

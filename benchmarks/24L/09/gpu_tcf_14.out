@@ -1,0 +1,84 @@
+[random cube example] Beginning random cube example.
+file_pqri /home/ewa19/RISM/test/solutes/24L_rism.txt
+[random cube example] Setup has finished.
+[random cube example] Running direct comparison...
+[random cube example] Running treedriver...
+[BaryTree]
+[BaryTree] Running BaryTree.
+[BaryTree]
+[BaryTree] RunParams struct has been set to the following:
+[BaryTree]
+[BaryTree]                     kernel = 2
+[BaryTree]          num_kernel_params = 2
+[BaryTree]              kernel_params = 0.147060, 1.000000, 
+[BaryTree]              approximation = 1
+[BaryTree]               compute_type = 1
+[BaryTree]                      theta = 0.900000
+[BaryTree]          size_check_factor = 1.000000
+[BaryTree]               interp_order = 14
+[BaryTree]     interp_pts_per_cluster = 3375
+[BaryTree] interp_charges_per_cluster = 3375
+[BaryTree]        max_per_source_leaf = 256
+[BaryTree]        max_per_target_leaf = 2000
+[BaryTree]                  verbosity = 1
+[BaryTree]
+[BaryTree]
+[BaryTree] Tree information: 
+[BaryTree]
+[BaryTree]          Cumulative tree nodes: 25747
+[BaryTree]         Cumulative tree leaves: 16384
+[BaryTree]
+[BaryTree]         Maximum tree leaf size: 1680
+[BaryTree]         Minimum tree leaf size: 1365
+[BaryTree]                          Ratio: 1.230769
+[BaryTree]
+[BaryTree]
+[BaryTree] Batches information: 
+[BaryTree]
+[BaryTree]             Cumulative batches: 8
+[BaryTree]
+[BaryTree]
+[BaryTree] Interaction information: 
+[BaryTree]
+[BaryTree]    Cumulative cluster interactions: 2071
+[BaryTree]            PP cluster interactions: 1398
+[BaryTree]            CP cluster interactions: 673
+[BaryTree]
+[BaryTree]    Cumulative ptwise interactions: 1081373085
+[BaryTree]            PP ptwise interactions: 649875960
+[BaryTree]            CP ptwise interactions: 431497125
+[BaryTree]
+[BaryTree] BaryTree has finished.
+[BaryTree]
+[random cube example]
+[random cube example] Treecode timing summary (all times in seconds)...
+[random cube example]
+[random cube example]                                        Time
+[random cube example] |    Total time......................  5.297e+02 s    (100.00%) 
+[random cube example] |    |
+[random cube example] |    |....Pre-process................  8.649e-02 s    (  0.02%) 
+[random cube example] |    |....Directdriver...............  1.282e+00 s    (  0.24%) 
+[random cube example] |    |....Treedriver.................  5.283e+02 s    ( 99.74%) 
+[random cube example]
+[random cube example]
+[random cube example] |    Directdriver....................  1.282e+00 s    (100.00%) 
+[random cube example] |    |
+[random cube example] |    |....Compute local..............  1.282e+00 s    (100.00%) 
+[random cube example]
+[random cube example]
+[random cube example] |    Treedriver......................  5.283e+02 s    (100.00%) 
+[random cube example] |    |
+[random cube example] |    |....Build local tree...........  6.163e-03 s    (  0.00%) 
+[random cube example] |    |....Build local batches........  5.388e-05 s    (  0.00%) 
+[random cube example] |    |....Build local clusters.......  4.551e-04 s    (  0.00%) 
+[random cube example] |    |....Build local lists..........  3.190e-04 s    (  0.00%) 
+[random cube example] |    |....Compute local..............  8.875e+00 s    (  1.68%) 
+[random cube example] |    |....Compute cp2................  5.194e+02 s    ( 98.32%) 
+[random cube example] |    |....Correct potential..........  1.001e-05 s    (  0.00%) 
+[random cube example] |    |....Cleanup....................  3.579e-04 s    (  0.00%) 
+[random cube example]
+[random cube example]                Tree potential energy:  -1856366.622534
+[random cube example]
+[random cube example] Relative inf norm error in potential:  2.350003e-07 
+[random cube example]   Relative 2 norm error in potential:  3.863255e-08 
+[random cube example]
