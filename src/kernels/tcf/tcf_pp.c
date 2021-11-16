@@ -54,7 +54,7 @@ void K_TCF_PP(
                     }
                 } // end loop over interpolation points
                 potential[ii] += temporary_potential;
-                printf("direct potential, %d %15.6e\n", ii, temporary_potential);
+                //printf("direct potential, %d %15.6e\n", ii, temporary_potential);
             }
         }
     }

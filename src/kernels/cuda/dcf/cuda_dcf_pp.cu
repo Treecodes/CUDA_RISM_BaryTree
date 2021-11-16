@@ -76,11 +76,7 @@ void K_CUDA_DCF_PP(
     FLOAT *d_source_z;
     FLOAT *d_source_q;
 
-<<<<<<< HEAD
     //printf("CUDA received call_type: %d\n", call_type);
-=======
-//    printf("CUDA received call_type: %d\n", call_type);
->>>>>>> bd7b8c92bc9196db1935455d44e302f27f375064
     cudaError_t cudaErr;
     if ( call_type == 1 || call_type == 3 ) {
         cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
