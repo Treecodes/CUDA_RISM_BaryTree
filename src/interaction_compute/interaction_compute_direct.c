@@ -14,7 +14,7 @@
 #include "../kernels/dcf/dcf.h"
 
 #ifdef CUDA_ENABLED
-    #define SINGLE
+    //#define SINGLE
     #ifdef SINGLE
         #define FLOAT float
     #else

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <cuda.h>
 
-#define SINGLE
+//#define SINGLE
 
 #ifdef SINGLE
 #define FLOAT float

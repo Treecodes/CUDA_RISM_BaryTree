@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#define SINGLE
+//#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
