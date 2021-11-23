@@ -128,7 +128,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
 
-            int stream_id = j%3;
+            int stream_id = j%4;
 
 #ifdef CUDA_ENABLED
             int call_type = 0;
@@ -196,7 +196,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         interp_order_lim,
                         s_source_x, s_source_y, s_source_z, s_source_q,
                         s_cluster_x, s_cluster_y, s_cluster_z, cluster_q,
-                        run_params);
+                        run_params, stream_id);
     #else
                     K_CUDA_TCF_CP_Lagrange(
                         call_type, num_source, num_cluster, num_charge,
@@ -205,7 +205,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         interp_order_lim,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
-                        run_params);
+                        run_params, stream_id);
     #endif
 #else
                     K_TCF_CP_Lagrange(
@@ -288,7 +288,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             double target_y_min = target_tree_y_min[node_index];
             double target_z_min = target_tree_z_min[node_index];
 
-            int stream_id = j%3;
+            int stream_id = j%4;
 
 #ifdef CUDA_ENABLED
             int call_type = 0;
@@ -376,7 +376,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, potential);
+                    run_params, potential, stream_id);
     #else
                 K_CUDA_TCF_PP(
                     call_type, num_source,
@@ -392,7 +392,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     batch_num_sources, batch_idx_start,
                     source_x, source_y, source_z, source_q,
 
-                    run_params, potential);
+                    run_params, potential, stream_id);
     #endif
 #else
                 K_TCF_PP(
@@ -488,15 +488,15 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     //}
 
     // debugging direct potentials
-    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
-    for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
-    for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-        int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-        printf("returned potential, %d %15.6e\n", ii, potential[ii]);
-    }
-    }
-    }
+    //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+    //for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
+    //for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
+    //for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
+    //    int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
+    //    printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+    //}
+    //}
+    //}
 
 #ifdef SINGLE
     free(s_source_x );

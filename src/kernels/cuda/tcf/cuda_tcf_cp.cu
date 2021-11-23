@@ -88,9 +88,11 @@ void K_CUDA_TCF_CP_Lagrange(
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
     FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, double *cluster_q,
-    struct RunParams *run_params)
+    struct RunParams *run_params, int stream_id)
 {
     cudaError_t cudaErr;
+    cudaStream_t stream[4];
+
     FLOAT *d_source_x;
     FLOAT *d_source_y; 
     FLOAT *d_source_z;
@@ -100,8 +102,14 @@ void K_CUDA_TCF_CP_Lagrange(
     FLOAT *d_cluster_z;
     FLOAT *d_potential;
 
-    printf("TCF_CP received call_type: %d\n", call_type);
+    //printf("TCF_CP received call_type: %d\n", call_type);
     if ( call_type == 1 ) {
+        for (int i = 0; i < 4; ++i) {
+            cudaErr = cudaStreamCreate(&stream[i]);
+            if ( cudaErr != cudaSuccess )
+                printf("Stream creation failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        }
+
         cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -164,7 +172,7 @@ void K_CUDA_TCF_CP_Lagrange(
     dim3 nblocks((interp_order_lim-1)/threadsperblock + 1,
                  (interp_order_lim-1)/threadsperblock + 1,
                  (interp_order_lim-1)/threadsperblock + 1);
-    CUDA_TCF_CP_Lagrange<<<nblocks,nthreads>>>(eta, kap, kap_eta_2,
+    CUDA_TCF_CP_Lagrange<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
                     batch_num_sources, batch_idx_start,
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     d_source_x,  d_source_y,  d_source_z,  d_source_q,
@@ -186,6 +194,9 @@ void K_CUDA_TCF_CP_Lagrange(
         cudaFree(d_cluster_y);
         cudaFree(d_cluster_z);
         cudaFree(d_potential);
+
+        for (int i = 0; i < 4; ++i)
+           cudaErr = cudaStreamDestroy(stream[i]);
     }
 
     return;

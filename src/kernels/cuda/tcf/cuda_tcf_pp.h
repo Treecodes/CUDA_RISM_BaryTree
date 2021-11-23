@@ -19,7 +19,7 @@ void K_CUDA_TCF_PP(
 
     int cluster_num_sources, int cluster_idx_start,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    struct RunParams *run_params, double *potential);
+    struct RunParams *run_params, double *potential, int stream_id);
 #ifdef __CUDACC__
 }
 #endif

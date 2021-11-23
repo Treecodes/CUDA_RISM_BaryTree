@@ -14,7 +14,7 @@ void K_CUDA_TCF_CP_Lagrange(
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
     FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, double *cluster_q,
-    struct RunParams *run_params);
+    struct RunParams *run_params, int stream_id);
 
 #ifdef __CUDACC__
 }
