@@ -104,6 +104,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     }
 #endif
 
+#ifdef CUDA_ENABLED
+    // RQ: Initialize the streams
+    initStream();
+#endif
 
     for (int i = 0; i < batches->numnodes; i++) {
     
@@ -361,6 +365,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
+                /* RQ test
+                potential[0] = 1.0;
+                potential[1] = 1.5;
+                printf("RQ begin K_CUDA_TCF_PP in cp\n");
+                */
+
     #ifdef SINGLE
                 K_CUDA_TCF_PP(
                     call_type, num_source,
@@ -394,6 +404,14 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     run_params, potential, stream_id);
     #endif
+                // RQ test
+                //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+                //for (int n = 0; n < 1518; n++) {
+                //    printf("following potential, %d %15.6e\n", n, potential[n]);
+                //}
+                //exit(1);
+
+
 #else
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -452,6 +470,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     run_params, potential);
     #endif
+
 #else
                 K_DCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -487,16 +506,25 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     //    }
     //}
 
+#ifdef CUDA_ENABLED
+    // RQ: Destroy the streams
+    delStream();
+#endif
+
     // debugging direct potentials
-    //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+    // RQ test
     //for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
     //for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
     //for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-    //    int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-    //    printf("returned potential, %d %15.6e\n", ii, potential[ii]);
-    //}
-    //}
-    //}
+    for (int ix = 0; ix <= 2; ix++) {
+        for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
+            for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
+                int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
+                printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+            }
+        }
+    }
 
 #ifdef SINGLE
     free(s_source_x );

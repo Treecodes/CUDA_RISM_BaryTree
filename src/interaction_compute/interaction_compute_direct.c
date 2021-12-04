@@ -140,6 +140,8 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
+        // RQ
+        printf("Check first call of K_CUDA_TCF_PP in direct\n");
     #ifdef SINGLE
         K_CUDA_TCF_PP(
             call_type, num_sources,

@@ -5,8 +5,14 @@
 #include "../../../run_params/struct_run_params.h"
 
 #ifdef __CUDACC__
+
+
 extern "C" {
 #endif
+// RQ
+void initStream();
+void delStream();
+
 void K_CUDA_TCF_PP(
     int call_type,         int num_source,
     int target_x_low_ind,  int target_x_high_ind,
