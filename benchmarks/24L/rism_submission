@@ -6,7 +6,7 @@
    
 
 echo $1
-for ((  i = 0 ;  i <= 7;  i++  ))
+for ((  i = 0 ;  i <= 0;  i++  ))
  do
   echo $i
   if [ $i -eq 0 ]; then
@@ -17,7 +17,8 @@ for ((  i = 0 ;  i <= 7;  i++  ))
   echo $j
    sed "s/theta               0.9/theta               $1/" ./rismexample.in >rismexample.temp
    sed "s/order               1/order               $j/" ./rismexample.temp >rismexample_$j.in
-   /home/ewa19/RISM/barytree/CUDA_VERSION/BaryTree/build/bin/run_readin_rism_gpu rismexample_$j.in >gpu_tcf_$j.out
+   #/home/ewa19/RISM/barytree/CUDA_VERSION/BaryTree/build/bin/run_readin_rism_gpu rismexample_$j.in >gpu_tcf_$j.out
+   /scem/work/qirx/workSpace/rismBaryTree/build/bin/run_readin_rism_gpu rismexample_$j.in >gpu_tcf_$j.out
    wait $pid
    rm rismexample.temp
  done

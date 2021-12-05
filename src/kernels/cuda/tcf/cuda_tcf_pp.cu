@@ -58,8 +58,8 @@ static void CUDA_TCF_PP(
 
         int ii = (ix * target_yz_dim) + (iy * target_z_dim) + iz;
         // RQ check
-        //if (ii < 1518)
-        //    printf("RQ inside kernel, ii-source_q: %d\t%f\n", ii, source_q[ii]);
+        if (ii < 50)
+            printf("RQ inside kernel, input d_potential: %d\t\t%f\n", ii, d_potential[ii]);
 
         FLOAT temporary_potential = 0.0;
 
@@ -86,8 +86,8 @@ static void CUDA_TCF_PP(
         }
         d_potential[ii] += temporary_potential;
         // RQ check
-        //if (ii < 1518)
-        //    printf("current potential, %d temp %15.6e d_pot %15.6e\n", ii, temporary_potential, d_potential[ii]);
+        if (ii < 50)
+            printf("output potential, %d temp %15.6e d_pot %15.6e\n", ii, temporary_potential, d_potential[ii]);
     }
 
     return;
@@ -140,7 +140,7 @@ void K_CUDA_TCF_PP(
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
         // RQ Check
-        //printf("num_souirce: %d\n", num_source);
+        printf("num_souirce: %d\n", num_source);
         //for (int i = 0; i < num_source; i++) {
         //    printf("RQ source_q %f\n", source_q[i]);
         //}
@@ -180,10 +180,11 @@ void K_CUDA_TCF_PP(
 
     // RQ check
     //printf("RQ check x-y-z dim: %d %d %d\n", target_x_dim, target_y_dim, target_z_dim);
+    printf("RQ invoking kernel with call_type %d\n", call_type);
 
     // RQ - test without stream
-    //CUDA_TCF_PP<<<nblocks,nthreads>>>(eta, kap, kap_eta_2,
-    CUDA_TCF_PP<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
+    CUDA_TCF_PP<<<nblocks,nthreads>>>(eta, kap, kap_eta_2,
+    //CUDA_TCF_PP<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
                     cluster_num_sources, cluster_idx_start,
                     target_x_low_ind, target_y_low_ind, target_z_low_ind,
                     target_x_high_ind, target_y_high_ind, target_z_high_ind,
@@ -193,8 +194,8 @@ void K_CUDA_TCF_PP(
                     d_source_x, d_source_y, d_source_z, d_source_q, d_potential);
 
     // RQ
-    cudaStreamSynchronize(stream[stream_id]);
-    // cudaDeviceSynchronize();
+    //cudaStreamSynchronize(stream[stream_id]);
+    cudaDeviceSynchronize();
         //printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
         //printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
         //printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
@@ -207,29 +208,33 @@ void K_CUDA_TCF_PP(
         //}
         //}
     // RQ test
-    if ( call_type == 2 || call_type == 3 ) {
+    //if ( call_type == 2 || call_type == 3 ) {
+    if ( call_type == 1 || call_type == 3 ) {
 
         cudaErr = cudaMemcpy(potential, d_potential,
                              target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
         if ( cudaErr != cudaSuccess )
             printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-    /* RQ
+    // RQ
     printf("RQ check potential, %d %15.6e\n", 1, potential[1]);
     printf("RQ check potential, %d %15.6e\n", 2, potential[2]);
     potential[0] = 3.1;
     //potential[1] = 3.2;
     //potential[2] = 3.3;
     potential[3] = 3.4;
-    */
+    //
 
 
         // RQ test
+        for (int ii = 0; ii < 50; ii++)
+                printf("RQ direct potential, %d %15.6e\n", ii, potential[ii]);
+        //exit(1);
         /*for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
         for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
             int ii = (ix * target_yz_dim_glob) + (iy * target_z_dim_glob ) + iz;
-            if (ii < 1518)
+            if (ii < 50)
                 printf("RQ direct potential, %d %15.6e\n", ii, potential[ii]);
         }
         }

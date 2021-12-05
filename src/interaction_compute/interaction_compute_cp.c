@@ -192,6 +192,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
+                // RQ test
+                //printf("RQ begin K_CUDA_TCF_CP_L in cp\n");
+                //break;
+                
+
+
     #ifdef SINGLE
                     K_CUDA_TCF_CP_Lagrange(
                         call_type, num_source, num_cluster, num_charge,
@@ -277,6 +283,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 /* * ********************************************************/
 
         for (int j = 0; j < num_direct_in_batch; j++) {
+
+
+            // RQ test
+            //if (j > 0) break;
 
             int node_index = direct_inter_list[i][j];
     
@@ -365,11 +375,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-                /* RQ test
+                // RQ test
                 potential[0] = 1.0;
                 potential[1] = 1.5;
-                printf("RQ begin K_CUDA_TCF_PP in cp\n");
-                */
+                printf("RQ begin K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
+                //
 
     #ifdef SINGLE
                 K_CUDA_TCF_PP(
@@ -406,11 +416,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     #endif
                 // RQ test
                 //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-                //for (int n = 0; n < 1518; n++) {
-                //    printf("following potential, %d %15.6e\n", n, potential[n]);
-                //}
-                //exit(1);
-
+                for (int n = 0; n < 50; n++)
+                    printf("following potential, %d %15.6e\n", n, potential[n]);
+                printf("RQ end K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
+                exit(1);
 
 #else
                 K_TCF_PP(
@@ -535,6 +544,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     free(s_cluster_y);
     free(s_cluster_z);
 #endif
+
+    // RQ test
+    //exit(1);
 
     return;
 
