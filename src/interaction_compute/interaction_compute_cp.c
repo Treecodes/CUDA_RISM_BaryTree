@@ -284,10 +284,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
         for (int j = 0; j < num_direct_in_batch; j++) {
 
-
-            // RQ test
-            //if (j > 0) break;
-
             int node_index = direct_inter_list[i][j];
     
             int target_x_low_ind = target_tree_x_low_ind[node_index];
@@ -376,10 +372,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
 #ifdef CUDA_ENABLED
                 // RQ test
-                potential[0] = 1.0;
-                potential[1] = 1.5;
-                printf("RQ begin K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
-                //
+                //potential[0] = 1.0;
+                //potential[1] = 1.5;
+                //printf("RQ begin K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
 
     #ifdef SINGLE
                 K_CUDA_TCF_PP(
@@ -416,10 +411,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     #endif
                 // RQ test
                 //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-                for (int n = 0; n < 50; n++)
-                    printf("following potential, %d %15.6e\n", n, potential[n]);
-                printf("RQ end K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
-                exit(1);
+                //for (int n = 0; n < 50; n++)
+                //for (int n = 6555654; n < 6555704; n++)
+                //    printf("following potential, %d %15.6e\n", n, potential[n]);
+                //printf("RQ end K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
+                //if (j > 1) exit(1);
 
 #else
                 K_TCF_PP(
@@ -523,14 +519,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     // debugging direct potentials
     int target_yzdim = target_y_dim_glob*target_z_dim_glob;
     // RQ test
-    //for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
-    //for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
-    //for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-    for (int ix = 0; ix <= 2; ix++) {
+    //for (int ix = 0; ix <= 2; ix++) {
+    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
         for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
             for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
                 int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-                printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+                if (potential[ii] < 0.0)
+                    printf("returned potential, %d %15.6e\n", ii, potential[ii]);
             }
         }
     }
