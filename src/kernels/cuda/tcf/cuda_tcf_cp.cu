@@ -11,7 +11,7 @@
 #endif
 
 #include "cuda_tcf_cp.h"
-
+#include "device_vars.h"
 
 __global__ 
 void  CUDA_TCF_CP_Lagrange(
@@ -19,7 +19,7 @@ void  CUDA_TCF_CP_Lagrange(
     int batch_num_sources, int batch_idx_start,
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, FLOAT *d_potential)
+    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, FLOAT *potential)
 {
     int k1 = threadIdx.x + blockDim.x * blockIdx.x;
     int k2 = threadIdx.y + blockDim.y * blockIdx.y;
@@ -53,33 +53,10 @@ void  CUDA_TCF_CP_Lagrange(
                                      -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
             }
         } // end loop over interpolation points
-        d_potential[ii] += temporary_potential;
+        potential[ii] += temporary_potential;
     }
     return;
 }
-
-__host__
-void CUDA_Setup_CP(
-    int num_source, int num_cluster,
-    FLOAT *source_x, FLOAT *source_y,  FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z,
-    FLOAT *d_source_x, FLOAT *d_source_y, FLOAT *d_source_z, FLOAT *d_source_q,
-    FLOAT *d_cluster_x, FLOAT *d_cluster_y, FLOAT *d_cluster_z)
-{
-
-    return;
-}
-
-
-__host__
-void CUDA_Free_CP(
-    FLOAT *d_source_x, FLOAT *d_source_y, FLOAT *d_source_z, FLOAT *d_source_q,
-    FLOAT *d_cluster_x, FLOAT *d_cluster_y, FLOAT *d_cluster_z)
-{
-
-    return;
-}
-
 
 __host__
 void K_CUDA_TCF_CP_Lagrange(
@@ -90,79 +67,6 @@ void K_CUDA_TCF_CP_Lagrange(
     FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, double *cluster_q,
     struct RunParams *run_params, int stream_id)
 {
-    cudaError_t cudaErr;
-    cudaStream_t stream[4];
-
-    FLOAT *d_source_x;
-    FLOAT *d_source_y; 
-    FLOAT *d_source_z;
-    FLOAT *d_source_q;
-    FLOAT *d_cluster_x;
-    FLOAT *d_cluster_y;
-    FLOAT *d_cluster_z;
-    FLOAT *d_potential;
-
-    //printf("TCF_CP received call_type: %d\n", call_type);
-    if ( call_type == 1 ) {
-        for (int i = 0; i < 4; ++i) {
-            cudaErr = cudaStreamCreate(&stream[i]);
-            if ( cudaErr != cudaSuccess )
-                printf("Stream creation failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        }
-
-        cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_y, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_z, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_q, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        cudaErr = cudaMalloc(&d_cluster_x, sizeof(FLOAT)*num_cluster);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_cluster_y, sizeof(FLOAT)*num_cluster);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_cluster_z, sizeof(FLOAT)*num_cluster);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        cudaErr = cudaMalloc(&d_potential, sizeof(FLOAT)*num_charge);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        cudaErr = cudaMemcpy(d_source_x, source_x, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_y, source_y, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_z, source_z, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_cluster_x, cluster_x, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_cluster_y, cluster_y, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_cluster_z, cluster_z, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_potential, cluster_q, sizeof(FLOAT)*num_charge, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-    }
-
     FLOAT kap = (FLOAT)run_params->kernel_params[0];
     FLOAT eta = (FLOAT)run_params->kernel_params[1];
     FLOAT kap_eta_2 = kap * eta / 2.0;
@@ -176,28 +80,7 @@ void K_CUDA_TCF_CP_Lagrange(
                     batch_num_sources, batch_idx_start,
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     d_source_x,  d_source_y,  d_source_z,  d_source_q,
-                    d_cluster_x, d_cluster_y, d_cluster_z, d_potential);
-    //cudaErr = cudaDeviceSynchronize();
-    //if ( cudaErr != cudaSuccess )
-    //    printf("Kernel launch failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-    if ( call_type == 2 ) {
-        cudaErr = cudaMemcpy(cluster_q, d_potential, sizeof(FLOAT)*num_charge, cudaMemcpyDeviceToHost);
-        if ( cudaErr != cudaSuccess )
-            printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        cudaFree(d_source_x);
-        cudaFree(d_source_y);
-        cudaFree(d_source_z);
-        cudaFree(d_source_q);
-        cudaFree(d_cluster_x);
-        cudaFree(d_cluster_y);
-        cudaFree(d_cluster_z);
-        cudaFree(d_potential);
-
-        for (int i = 0; i < 4; ++i)
-           cudaErr = cudaStreamDestroy(stream[i]);
-    }
+                    d_cluster_x, d_cluster_y, d_cluster_z, d_cluster_q);
 
     return;
 }

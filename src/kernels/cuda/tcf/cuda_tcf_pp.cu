@@ -11,8 +11,8 @@
 #endif
 
 #include "cuda_tcf_pp.h"
+#include "device_vars.h"
 
-// RQ: Make device vars global
 cudaError_t cudaErr;
 cudaStream_t stream[4];
 FLOAT *d_source_x;
@@ -20,10 +20,15 @@ FLOAT *d_source_y;
 FLOAT *d_source_z;
 FLOAT *d_source_q;
 FLOAT *d_potential;
+FLOAT *d_cluster_x;
+FLOAT *d_cluster_y;
+FLOAT *d_cluster_z;
+FLOAT *d_cluster_q;
 
 // RQ - initialize streams
 extern "C"
-void initStream() {
+void initStream()
+{
     for (int i = 0; i < 4; ++i) {
         cudaErr = cudaStreamCreate(&stream[i]);
         if ( cudaErr != cudaSuccess )
@@ -32,12 +37,126 @@ void initStream() {
 }
 
 extern "C"
-void delStream() {
+void delStream()
+{
     for (int i = 0; i < 4; ++i) {
         cudaErr = cudaStreamDestroy(stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream destruction failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
     }
+}
+
+// RL - initialize/free device memories
+extern "C"
+void CUDA_Setup(int call_type,
+    int num_source, int num_cluster, int num_charge, int target_xyz_dim,
+    FLOAT *source_x, FLOAT *source_y,  FLOAT *source_z, FLOAT *source_q,
+    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z,
+    double *cluster_q, double *potential)
+{
+    if ( call_type == 1 || call_type == 3 ) {
+        cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_source_y, sizeof(FLOAT)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_source_z, sizeof(FLOAT)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_source_q, sizeof(FLOAT)*num_source);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+        cudaErr = cudaMalloc(&d_potential, sizeof(FLOAT)*target_xyz_dim);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+    }
+
+    if ( call_type == 1 ) {
+        cudaErr = cudaMalloc(&d_cluster_x, sizeof(FLOAT)*num_cluster);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_cluster_y, sizeof(FLOAT)*num_cluster);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMalloc(&d_cluster_z, sizeof(FLOAT)*num_cluster);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+        cudaErr = cudaMalloc(&d_cluster_q, sizeof(FLOAT)*num_charge);
+        if ( cudaErr != cudaSuccess )
+            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+    }
+
+
+    if ( call_type == 1 || call_type == 3 ) {
+        cudaErr = cudaMemcpy(d_source_x, source_x, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_source_y, source_y, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_source_z, source_z, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+        cudaErr = cudaMemcpy(d_potential, potential, sizeof(FLOAT)*target_xyz_dim, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        //printf("CUDA copied data into device %d %d\n", num_source, target_xyz_dim);
+    }
+
+    if ( call_type == 1 ) {
+        cudaErr = cudaMemcpy(d_cluster_x, cluster_x, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_cluster_y, cluster_y, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_cluster_z, cluster_z, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaErr = cudaMemcpy(d_cluster_q, cluster_q, sizeof(FLOAT)*num_charge, cudaMemcpyHostToDevice);
+        if ( cudaErr != cudaSuccess )
+            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        //printf("CUDA copied data into device %d %d\n", num_cluster, num_charge);
+    }
+    return;
+}
+
+extern "C"
+void CUDA_Free(int call_type,
+    int num_charge, int target_xyz_dim,
+    double *cluster_q, double *potential)
+{
+    if ( call_type == 1 || call_type == 3 ) {
+        cudaErr = cudaMemcpy(potential, d_potential,
+                             target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
+        if ( cudaErr != cudaSuccess )
+            printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+
+        cudaFree(d_source_x);
+        cudaFree(d_source_y);
+        cudaFree(d_source_z);
+        cudaFree(d_source_q);
+        cudaFree(d_potential);
+    }
+
+    if ( call_type == 1 ) {
+        cudaErr = cudaMemcpy(cluster_q, d_cluster_q, sizeof(FLOAT)*num_charge, cudaMemcpyDeviceToHost);
+        if ( cudaErr != cudaSuccess )
+            printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+        cudaFree(d_cluster_x);
+        cudaFree(d_cluster_y);
+        cudaFree(d_cluster_z);
+        cudaFree(d_cluster_q);
+    }
+
+    return;
 }
 
 
@@ -51,39 +170,23 @@ static void CUDA_TCF_PP(
     FLOAT target_xmin, FLOAT target_ymin, FLOAT target_zmin,
     FLOAT target_xdd, FLOAT target_ydd, FLOAT target_zdd,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *d_potential)
+    FLOAT *potential)
 {
+    // ix/iy/iz always start from 0
     int ix = threadIdx.x + blockDim.x * blockIdx.x;
     int iy = threadIdx.y + blockDim.y * blockIdx.y;
     int iz = threadIdx.z + blockDim.z * blockIdx.z;
 
-    // RQ test
-    //int ii = (ix * target_yz_dim) + (iy * target_z_dim) + iz;
-    //if (ii < 40) {
-    //    d_potential[ii] = 5.0;
-    //    printf("inside kernel, blockDim.z %d blockIdz %d iz %d ii %d set d_potential: %f\n", blockDim.z, blockIdx.z, iz, ii, d_potential[ii]);
-    //}
-    
-    // RQ: Use thread index from lower bound
-    //if (ix >= target_x_low_ind && ix <= target_x_high_ind &&
-    //    iy >= target_y_low_ind && iy <= target_y_high_ind &&
-    //    iz >= target_z_low_ind && iz <= target_z_high_ind){
     if (ix < target_x_high_ind - target_x_low_ind + 1 &&
         iy < target_y_high_ind - target_y_low_ind + 1 &&
         iz < target_z_high_ind - target_z_low_ind + 1) {
         
-        //int ii = (ix * target_yz_dim) + (iy * target_z_dim) + iz;
-        int ii = ((ix + target_x_low_ind) * target_yz_dim) + ((iy + target_y_low_ind) * target_z_dim) + (iz + target_z_low_ind);
-
-        // RQ check
-        //if (ii < 50)
-        //    printf("RQ inside kernel, input d_potential: %d\t\t%f\n", ii, d_potential[ii]);
+        int ii = ((ix + target_x_low_ind) * target_yz_dim) +
+                 ((iy + target_y_low_ind) * target_z_dim ) +
+                  (iz + target_z_low_ind);
 
         FLOAT temporary_potential = 0.0;
 
-        //FLOAT tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
-        //FLOAT ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
-        //FLOAT tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
         FLOAT tx = target_xmin + ix * target_xdd;
         FLOAT ty = target_ymin + iy * target_ydd;
         FLOAT tz = target_zmin + iz * target_zdd;
@@ -105,11 +208,8 @@ static void CUDA_TCF_PP(
             }
 
         }
-        d_potential[ii] += temporary_potential;
+        potential[ii] += temporary_potential;
 
-        // RQ check
-        //if ( d_potential[ii] < 0.0)
-        //    printf("output potential, %d temp %15.6e d_pot %15.6e\n", ii, temporary_potential, d_potential[ii]);
     }
 
     return;
@@ -129,63 +229,6 @@ void K_CUDA_TCF_PP(
     struct RunParams *run_params, double *potential, int stream_id)
 {
     int target_yz_dim_glob = target_y_dim_glob * target_z_dim_glob;
-    int target_xyz_dim = target_x_dim_glob * target_yz_dim_glob;
-
-    //FLOAT *d_source_x;
-    //FLOAT *d_source_y;
-    //FLOAT *d_source_z;
-    //FLOAT *d_source_q;
-    //FLOAT *d_potential;
-
-    // RQ test
-    //cudaDeviceReset();
-    //printf("TCF_PP received call_type: %d\n", call_type);
-
-    if ( call_type == 1 || call_type == 3 ) {
-
-        cudaErr = cudaMalloc(&d_source_x, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_y, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_z, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMalloc(&d_source_q, sizeof(FLOAT)*num_source);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        cudaErr = cudaMalloc(&d_potential, sizeof(FLOAT)*target_xyz_dim);
-        if ( cudaErr != cudaSuccess )
-            printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        // RQ Check
-        //printf("In mem allocation num_souirce: %d\n", num_source);
-        //for (int i = 0; i < num_source; i++) {
-        //    printf("RQ source_q %f\n", source_q[i]);
-        //}
-
-
-        cudaErr = cudaMemcpy(d_source_x, source_x, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_y, source_y, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_z, source_z, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_source_q, source_q, sizeof(FLOAT)*num_source, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-        cudaErr = cudaMemcpy(d_potential, potential, sizeof(FLOAT)*target_xyz_dim, cudaMemcpyHostToDevice);
-        if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        //printf("CUDA copied data into device %d %d\n", num_source, target_xyz_dim);
-    }
-
     FLOAT kap = (FLOAT)run_params->kernel_params[0];
     FLOAT eta = (FLOAT)run_params->kernel_params[1];
     FLOAT kap_eta_2 = kap * eta / 2.0;
@@ -199,11 +242,6 @@ void K_CUDA_TCF_PP(
                  (target_y_dim-1)/threadsperblock + 1,
                  (target_z_dim-1)/threadsperblock + 1);
 
-    // RQ check
-    //printf("RQ check x-y-z dim: %d %d %d\n", target_x_dim, target_y_dim, target_z_dim);
-    //printf("RQ invoking kernel with call_type %d yz_dim %d z_dim_glob %d\n", call_type, target_yz_dim_glob, target_z_dim_glob);
-    //printf("x_dim %d y_dim %d z_dim %d nblocks %u %u %u\n", target_x_dim, target_y_dim, target_z_dim, nblocks.x, nblocks.y, nblocks.z);
-
     // RQ - test without stream
     //CUDA_TCF_PP<<<nblocks,nthreads>>>(eta, kap, kap_eta_2,
     CUDA_TCF_PP<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
@@ -216,57 +254,8 @@ void K_CUDA_TCF_PP(
                     d_source_x, d_source_y, d_source_z, d_source_q, d_potential);
 
     // RQ
-    cudaStreamSynchronize(stream[stream_id]);
+    //cudaStreamSynchronize(stream[stream_id]);
     //cudaDeviceSynchronize();
-        //printf("grid block x low/high %d %d\n", target_x_low_ind, target_x_high_ind);
-        //printf("grid block y low/high %d %d\n", target_y_low_ind, target_y_high_ind);
-        //printf("grid block z low/high %d %d\n", target_z_low_ind, target_z_high_ind);
-        //for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
-        //for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
-        //for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
-        //    int ii = (ix * target_yz_dim_glob) + (iy * target_z_dim_glob ) + iz;
-        //    printf("direct potential, %d %15.6e\n", ii, potential[ii]);
-        //}
-        //}
-        //}
-
-    // RQ test
-    //if ( call_type == 0 || call_type == 3 ) {
-    if ( call_type == 2 || call_type == 3 ) {
-
-        cudaErr = cudaMemcpy(potential, d_potential,
-                             target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
-        if ( cudaErr != cudaSuccess )
-            printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-
-    //printf("RQ check potential, %d %15.6e\n", 1, potential[1]);
-    //printf("RQ check potential, %d %15.6e\n", 2, potential[2]);
-    //potential[0] = 3.1;
-    //potential[3] = 3.4;
-
-        // RQ test
-        //for (int ii = 0; ii < 50; ii++)
-        //for (int ii = 6555654; ii < 6555704; ii++)
-        //        printf("RQ direct potential, %d %15.6e\n", ii, potential[ii]);
-
-        //for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
-        //for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
-        //for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
-        //    int ii = (ix * target_yz_dim_glob) + (iy * target_z_dim_glob ) + iz;
-        //    if ( potential[ii] < 0.0)
-        //        printf("RQ direct potential, %d %15.6e\n", ii, potential[ii]);
-        //}
-        //}
-        //}
-
-
-        cudaFree(d_source_x);
-        cudaFree(d_source_y);
-        cudaFree(d_source_z);
-        cudaFree(d_source_q);
-        cudaFree(d_potential);
-
-    }
 
     return;
 

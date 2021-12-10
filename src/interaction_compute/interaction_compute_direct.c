@@ -39,8 +39,6 @@ void InteractionCompute_Direct(double *potential,
     double *source_z  = sources->z;
     double *source_q  = sources->q;
 
-    int num_targets   = targets->num;
-
     double target_xdd = targets->xdd;
     double target_ydd = targets->ydd;
     double target_zdd = targets->zdd;
@@ -69,6 +67,16 @@ void InteractionCompute_Direct(double *potential,
 
 #ifdef CUDA_ENABLED
     int call_type = 3;
+    int target_xyz_dim = target_xdim*target_ydim*target_zdim;
+    int num_clusters = 1;
+    int num_charges = 1;
+    double *cluster_x = NULL;
+    double *cluster_y = NULL;
+    double *cluster_z = NULL;
+    double *cluster_q = NULL;
+    CUDA_Setup(call_type, num_sources, num_clusters, num_charges, target_xyz_dim,
+               source_x, source_y, source_z, source_q, cluster_x, cluster_y, cluster_z,
+               cluster_q, potential);
 #endif
 
 /* * ********************************************************/
@@ -140,8 +148,6 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-        // RQ
-        printf("Check first call of K_CUDA_TCF_PP in direct\n");
     #ifdef SINGLE
         K_CUDA_TCF_PP(
             call_type, num_sources,
@@ -250,22 +256,14 @@ void InteractionCompute_Direct(double *potential,
                         
     }
 
-    //int target_yzdim = target_ydim*target_zdim;
-    //for (int ix = 0; ix <= target_xdim-1; ix++) {
-    //for (int iy = 0; iy <= target_ydim-1; iy++) {
-    //for (int iz = 0; iz <= target_zdim-1; iz++) {
-    //    int ii = (ix * target_yzdim) + (iy * target_zdim) + iz;
-    //    printf("direct sum pot, %d %15.6e\n", ii, potential[ii]);
-    //}
-    //}
-    //}
-
+#ifdef CUDA_ENABLED
+    CUDA_Free(call_type, num_charges, target_xyz_dim, cluster_q, potential);
+#endif
 #ifdef SINGLE
     free(s_source_x );
     free(s_source_y );
     free(s_source_z );
     free(s_source_q );
 #endif
-
     return;
 }

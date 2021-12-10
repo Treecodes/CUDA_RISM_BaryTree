@@ -12,6 +12,15 @@ extern "C" {
 // RQ
 void initStream();
 void delStream();
+// RL
+void CUDA_Setup(int call_type,
+    int num_source, int num_cluster, int num_charge, int target_xyz_dim,
+    FLOAT *source_x, FLOAT *source_y,  FLOAT *source_z, FLOAT *source_q,
+    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z,
+    double *cluster_q, double *potential);
+void CUDA_Free(int call_type,
+    int num_charge, int target_xyz_dim,
+    double *cluster_q, double *potential);
 
 void K_CUDA_TCF_PP(
     int call_type,         int num_source,

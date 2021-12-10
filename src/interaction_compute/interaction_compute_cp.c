@@ -106,6 +106,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
 #ifdef CUDA_ENABLED
     // RQ: Initialize the streams
+    int call_type = 1;
+    int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
+    CUDA_Setup(call_type, num_source, num_cluster, num_charge, target_xyz_dim,
+               source_x, source_y, source_z, source_q, cluster_x, cluster_y, cluster_z,
+               cluster_q, potential);
     initStream();
 #endif
 
@@ -133,12 +138,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
 
             int stream_id = j%4;
-
-#ifdef CUDA_ENABLED
-            int call_type = 0;
-            if ( j == 0 ) call_type = 1;
-            if ( j == num_approx_in_batch - 1) call_type = 2;
-#endif
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -192,12 +191,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-                // RQ test
-                //printf("RQ begin K_CUDA_TCF_CP_L in cp\n");
-                //break;
-                
-
-
     #ifdef SINGLE
                     K_CUDA_TCF_CP_Lagrange(
                         call_type, num_source, num_cluster, num_charge,
@@ -300,12 +293,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
             int stream_id = j%4;
 
-#ifdef CUDA_ENABLED
-            int call_type = 0;
-            if ( j == 0 ) call_type = 1;
-            if ( j == num_direct_in_batch - 1) call_type = 2;
-#endif
-
     /* * *********************************************/
     /* * *************** Coulomb *********************/
     /* * *********************************************/
@@ -313,7 +300,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             if (run_params->kernel == COULOMB) {
 
 #ifdef CUDA_ENABLED
-                call_type = 1;
     #ifdef SINGLE
                 K_CUDA_Coulomb_PP(
                     call_type, num_source,
@@ -371,11 +357,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == TCF) {
 
 #ifdef CUDA_ENABLED
-                // RQ test
-                //potential[0] = 1.0;
-                //potential[1] = 1.5;
-                //printf("RQ begin K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
-
     #ifdef SINGLE
                 K_CUDA_TCF_PP(
                     call_type, num_source,
@@ -409,14 +390,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     run_params, potential, stream_id);
     #endif
-                // RQ test
-                //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-                //for (int n = 0; n < 50; n++)
-                //for (int n = 6555654; n < 6555704; n++)
-                //    printf("following potential, %d %15.6e\n", n, potential[n]);
-                //printf("RQ end K_CUDA_TCF_PP in cp, iter at j= %d\n", j);
-                //if (j > 1) exit(1);
-
 #else
                 K_TCF_PP(
                     target_x_low_ind, target_x_high_ind,
@@ -441,7 +414,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == DCF) {
 
 #ifdef CUDA_ENABLED
-                call_type = 1;
     #ifdef SINGLE
                 K_CUDA_DCF_PP(
                     call_type, num_source,
@@ -498,6 +470,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
     } // end loop over target batches
 
+#ifdef CUDA_ENABLED
+    // RQ: Destroy the streams
+    // RL: Release device memories
+    delStream();
+    CUDA_Free(call_type, num_charge, target_xyz_dim, cluster_q, potential);
+#endif
+
     // debugging cluster potentials
     //for (int i = 0; i < batches->numnodes; i++) {
     //    int num_approx_in_batch = num_approx[i];
@@ -506,29 +485,22 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     //        int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
     //        for (int ii = cluster_q_start;
     //            ii < cluster_q_start + interp_order_lim*interp_order_lim*interp_order_lim; ii++) {
-    //            printf("cluster_q %d %15.6e\n", ii, cluster_q[ii]);
+    //            printf("returned cluster_q %d %15.6e\n", ii, cluster_q[ii]);
     //         }
     //    }
     //}
 
-#ifdef CUDA_ENABLED
-    // RQ: Destroy the streams
-    delStream();
-#endif
-
     // debugging direct potentials
-    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-    // RQ test
-    //for (int ix = 0; ix <= 2; ix++) {
-    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
-        for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
-            for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-                int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-                if (potential[ii] < 0.0)
-                    printf("returned potential, %d %15.6e\n", ii, potential[ii]);
-            }
-        }
-    }
+    //int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+    //for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
+    //    for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
+    //        for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
+    //            int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
+    //            if (potential[ii] < 0.0)
+    //                printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+    //        }
+    //    }
+    //}
 
 #ifdef SINGLE
     free(s_source_x );
@@ -539,9 +511,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     free(s_cluster_y);
     free(s_cluster_z);
 #endif
-
-    // RQ test
-    //exit(1);
 
     return;
 
