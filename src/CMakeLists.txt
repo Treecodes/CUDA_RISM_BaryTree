@@ -104,9 +104,15 @@ SET(SRCS_CUDA_K_DCF
     kernels/cuda/dcf/cuda_dcf_cp.h
     kernels/cuda/dcf/cuda_dcf_cp.cu)
 
+SET(SRCS_CUDA_K_DOWNPASS
+    interaction_compute/cuda_downpass.cu
+    interaction_compute/cuda_downpass.h)
+
+
 SET(SRCS_CUDA_KERNELS ${SRCS_CUDA_K_COULOMB}
                       ${SRCS_CUDA_K_TCF}
-                      ${SRCS_CUDA_K_DCF})
+                      ${SRCS_CUDA_K_DCF}
+                      ${SRCS_CUDA_K_DOWNPASS})
 
 
 set(TRGT BaryTree_cpu)

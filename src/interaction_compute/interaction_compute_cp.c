@@ -137,7 +137,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
 
-            int stream_id = j%4;
+            int stream_id = j%16;
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -291,7 +291,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             double target_y_min = target_tree_y_min[node_index];
             double target_z_min = target_tree_z_min[node_index];
 
-            int stream_id = j%4;
+            int stream_id = j%16;
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
