@@ -114,6 +114,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     initStream();
 #endif
 
+
+/* * ********************************************************/
+/* * ************ POTENTIAL FROM APPROX *********************/
+/* * ********************************************************/
+
     for (int i = 0; i < batches->numnodes; i++) {
     
         int batch_ibeg = batches->ibeg[i];
@@ -125,11 +130,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
         int batch_num_sources = batch_iend - batch_ibeg + 1;
         int batch_idx_start =  batch_ibeg - 1;
 
-
-/* * ********************************************************/
-/* * ************ POTENTIAL FROM APPROX *********************/
-/* * ********************************************************/
-
         for (int j = 0; j < num_approx_in_batch; j++) {
 
             int node_index = approx_inter_list[i][j];
@@ -137,7 +137,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
 
-            int stream_id = j%4;
+            int stream_id = (i*num_approx_in_batch+j)%128;
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -271,9 +271,23 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
         } // end loop over cluster approximations
 
+//    } // end loop over target batches
+//
+//
 /* * ********************************************************/
 /* * ************ POTENTIAL FROM DIRECT *********************/
 /* * ********************************************************/
+//
+//    for (int i = 0; i < batches->numnodes; i++) {
+//    
+//        int batch_ibeg = batches->ibeg[i];
+//        int batch_iend = batches->iend[i];
+//        
+//        int num_approx_in_batch = num_approx[i];
+//        int num_direct_in_batch = num_direct[i];
+//
+//        int batch_num_sources = batch_iend - batch_ibeg + 1;
+//        int batch_idx_start =  batch_ibeg - 1;
 
         for (int j = 0; j < num_direct_in_batch; j++) {
 
@@ -291,7 +305,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             double target_y_min = target_tree_y_min[node_index];
             double target_z_min = target_tree_z_min[node_index];
 
-            int stream_id = j%4;
+            int stream_id = (i*num_approx_in_batch+j)%128;
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -496,8 +510,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     //    for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
     //        for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
     //            int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-    //            if (potential[ii] < 0.0)
-    //                printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+    //            printf("returned potential, %d %15.6e\n", ii, potential[ii]);
     //        }
     //    }
     //}

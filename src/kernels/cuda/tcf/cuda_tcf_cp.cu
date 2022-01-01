@@ -81,6 +81,7 @@ void K_CUDA_TCF_CP_Lagrange(
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     d_source_x,  d_source_y,  d_source_z,  d_source_q,
                     d_cluster_x, d_cluster_y, d_cluster_z, d_cluster_q);
+    //cudaStreamSynchronize(stream[stream_id]);
 
     return;
 }
