@@ -14,7 +14,7 @@
 #include "device_vars.h"
 
 cudaError_t cudaErr;
-cudaStream_t stream[16];
+cudaStream_t stream[256];
 FLOAT *d_source_x;
 FLOAT *d_source_y;
 FLOAT *d_source_z;
@@ -29,7 +29,7 @@ FLOAT *d_cluster_q;
 extern "C"
 void initStream()
 {
-    for (int i = 0; i < 16; ++i) {
+    for (int i = 0; i < 256; ++i) {
         cudaErr = cudaStreamCreate(&stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream creation failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -39,7 +39,7 @@ void initStream()
 extern "C"
 void delStream()
 {
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < 256; ++i) {
         cudaErr = cudaStreamDestroy(stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream destruction failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -242,7 +242,7 @@ void K_CUDA_TCF_PP(
                  (target_y_dim-1)/threadsperblock + 1,
                  (target_z_dim-1)/threadsperblock + 1);
 
-    // RQ - test without stream
+    // RQ - test with/without stream
     //CUDA_TCF_PP<<<nblocks,nthreads>>>(eta, kap, kap_eta_2,
     CUDA_TCF_PP<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
                     cluster_num_sources, cluster_idx_start,
@@ -252,10 +252,8 @@ void K_CUDA_TCF_PP(
                     target_xmin, target_ymin, target_zmin,
                     target_xdd, target_ydd, target_zdd,
                     d_source_x, d_source_y, d_source_z, d_source_q, d_potential);
-
-    // RQ
-    //cudaStreamSynchronize(stream[stream_id]);
     //cudaDeviceSynchronize();
+    //cudaStreamSynchronize(stream[stream_id]);
 
     return;
 

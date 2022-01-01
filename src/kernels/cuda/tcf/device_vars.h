@@ -1,5 +1,5 @@
 extern cudaError_t cudaErr;
-extern cudaStream_t stream[16];
+extern cudaStream_t stream[256];
 extern FLOAT *d_source_x;
 extern FLOAT *d_source_y;
 extern FLOAT *d_source_z;
