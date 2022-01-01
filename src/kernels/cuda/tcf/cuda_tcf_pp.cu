@@ -14,7 +14,7 @@
 #include "device_vars.h"
 
 cudaError_t cudaErr;
-cudaStream_t stream[512];
+cudaStream_t stream[256];
 FLOAT *d_source_x;
 FLOAT *d_source_y;
 FLOAT *d_source_z;
@@ -29,7 +29,7 @@ FLOAT *d_cluster_q;
 extern "C"
 void initStream()
 {
-    for (int i = 0; i < 512; ++i) {
+    for (int i = 0; i < 256; ++i) {
         cudaErr = cudaStreamCreate(&stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream creation failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -39,7 +39,7 @@ void initStream()
 extern "C"
 void delStream()
 {
-    for (int i = 0; i < 512; ++i) {
+    for (int i = 0; i < 256; ++i) {
         cudaErr = cudaStreamDestroy(stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream destruction failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
