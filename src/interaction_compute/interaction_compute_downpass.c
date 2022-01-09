@@ -18,6 +18,7 @@
         #define FLOAT double
     #endif
 #include "cuda_downpass.h"
+#include "../kernels/cuda/tcf/cuda_tcf.h"
 #endif
 
 static void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
@@ -93,10 +94,6 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     double target_ydd = targets->ydd;
     double target_zdd = targets->zdd;
 
-#ifdef CUDA_ENABLED
-   int call_type = 1;
-   int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
-#endif 
 
     if (run_params->approximation == LAGRANGE) {
 
@@ -107,6 +104,9 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
         }
 
+#ifdef CUDA_ENABLED
+        initStream();
+#endif
 
         //First go over each level
         for (int i = 0; i < tree->max_depth; ++i) {
@@ -141,6 +141,11 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                     }
                 }
                 
+#ifdef CUDA_ENABLED
+                CUDA_Setup2(sizeof_coeffs, sizeof_coeffs, sizeof_coeffs,
+                        coeff_x, coeff_y, coeff_z);
+#endif
+
                 //Go over each cluster at that level
                 coeff_start = 0;
                 for (int j = 0; j < tree->levels_list_num[i]; ++j) {
@@ -149,17 +154,26 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                     //Interpolate down to each child of the cluster
                     for (int k = 0; k < tree->num_children[idx]; ++k) {
                         int child_idx = tree->children[8*idx + k];
+#ifdef CUDA_ENABLED
+                        int stream_id = k%8;
+                        K_CUDA_CP_COMP_DOWNPASS(idx, child_idx, interp_order,
+                                         coeff_start, stream_id);
+#else
                         cp_comp_downpass(idx, child_idx, interp_order,
                                          coeff_start, coeff_x, coeff_y, coeff_z, cluster_q);
+#endif
                         coeff_start++;
                     }
                 }
                 free_vector(coeff_x);
                 free_vector(coeff_y);
                 free_vector(coeff_z);
+
+#ifdef CUDA_ENABLED
+                CUDA_Free2();
+#endif
             }
         }
-
 
         //Then go over the leaves to the targets
 
@@ -220,19 +234,9 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             }
 
 #ifdef CUDA_ENABLED
-    // RQ: Initialize the streams
-    int call_type = 1;
-    int num_charge = clusters->num_charges;
-    int stream_id = 0;
-    int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
-    CUDA_Setup2(call_type, sizeof_coeff_x, sizeof_coeff_y, sizeof_coeff_z, num_charge, target_xyz_dim,
-     coeff_x, coeff_y, coeff_z,
-     cluster_q, potential);
-     //printf("coeff_x, %15.6f \n",coeff_x);
-    //                                               initStream();
+            CUDA_Setup2(sizeof_coeff_x, sizeof_coeff_y, sizeof_coeff_z,
+                    coeff_x, coeff_y, coeff_z);
 #endif
-     printf("coeff_x, %15.6f \n",coeff_x);
-                                                   
 
             coeff_x_start = 0; coeff_y_start = 0; coeff_z_start = 0;
             for (int i = 0; i < tree->leaves_list_num; ++i) {
@@ -245,8 +249,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 int target_x_high_ind = target_tree_x_high_ind[idx];
                 int target_y_high_ind = target_tree_y_high_ind[idx];
                 int target_z_high_ind = target_tree_z_high_ind[idx];
+
 #ifdef CUDA_ENABLED    
-                 K_CUDA_CP_COMP_POT(call_type,idx, potential, interp_order,
+                 int stream_id = i%64;
+                 K_CUDA_CP_COMP_POT(idx, potential, interp_order,
                             target_x_low_ind, target_x_high_ind,
                             target_y_low_ind, target_y_high_ind,
                             target_z_low_ind, target_z_high_ind,
@@ -254,7 +260,8 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                             cluster_q, 
                             coeff_x_start, coeff_x,
                             coeff_y_start, coeff_y, 
-                            coeff_z_start, coeff_z, run_params, stream_id);
+                            coeff_z_start, coeff_z,
+                            stream_id);
 #else
                   cp_comp_pot(idx, potential, interp_order,
                             target_x_low_ind, target_x_high_ind,
@@ -271,30 +278,35 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 coeff_y_start += tree->y_dim[idx] * (interp_order + 1);
                 coeff_z_start += tree->z_dim[idx] * (interp_order + 1);
             }
-#ifdef CUDA_ENABLED
-
-       CUDA_Free2(call_type,target_xyz_dim,potential);
-#endif
 
             free_vector(coeff_x);
             free_vector(coeff_y);
             free_vector(coeff_z);
+
+#ifdef CUDA_ENABLED
+            CUDA_Free2();
+#endif
+
         }
 
         free_vector(weights);
-    // debugging direct potentials
-//    int target_yzdim = target_y_dim_glob*target_z_dim_glob;
-//    for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
-//        for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
-//            for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
-//                int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
-//                if (potential[ii] < 0.0)
-//                    printf("returned potential, %d %15.6e\n", ii, potential[ii]);
-//            }
+
+#ifdef CUDA_ENABLED
+        delStream();
+        int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
+        CUDA_Wrapup(target_xyz_dim, potential);
+//      debugging direct potentials
+//       int target_yzdim = target_y_dim_glob*target_z_dim_glob;
+//       for (int ix = 0; ix <= target_x_dim_glob-1; ix++) {
+//           for (int iy = 0; iy <= target_y_dim_glob-1; iy++) {
+//               for (int iz = 0; iz <= target_z_dim_glob-1; iz++) {
+//                   int ii = (ix * target_yzdim) + (iy * target_z_dim_glob) + iz;
+//                   if (potential[ii] < 0.0)
+//                       printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+//               }
+//           }
 //        }
-//     }
-
-
+#endif
 
     } else if (run_params->approximation == HERMITE) {
 

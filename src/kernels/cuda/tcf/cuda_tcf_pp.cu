@@ -133,7 +133,8 @@ void CUDA_Free(int call_type,
     int num_charge, int target_xyz_dim,
     double *cluster_q, double *potential)
 {
-    if ( call_type == 1 || call_type == 3 ) {
+    // for direct sum we are done. copy potential back to host
+    if ( call_type == 3 ) {
         cudaErr = cudaMemcpy(potential, d_potential,
                              target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
         if ( cudaErr != cudaSuccess )
@@ -146,14 +147,12 @@ void CUDA_Free(int call_type,
         cudaFree(d_potential);
     }
 
+    // saving both potential and cluster_q for downpass in treecode
+    // so no need to copy back to host
     if ( call_type == 1 ) {
-        cudaErr = cudaMemcpy(cluster_q, d_cluster_q, sizeof(FLOAT)*num_charge, cudaMemcpyDeviceToHost);
-        if ( cudaErr != cudaSuccess )
-            printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         cudaFree(d_cluster_x);
         cudaFree(d_cluster_y);
         cudaFree(d_cluster_z);
-        cudaFree(d_cluster_q);
     }
 
     return;

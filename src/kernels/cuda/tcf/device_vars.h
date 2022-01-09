@@ -9,3 +9,6 @@ extern FLOAT *d_cluster_x;
 extern FLOAT *d_cluster_y;
 extern FLOAT *d_cluster_z;
 extern FLOAT *d_cluster_q;
+extern FLOAT *d_coeff_x;
+extern FLOAT *d_coeff_y;
+extern FLOAT *d_coeff_z;
