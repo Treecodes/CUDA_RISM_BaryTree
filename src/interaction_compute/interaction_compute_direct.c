@@ -106,7 +106,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             s_source_x, s_source_y, s_source_z, s_source_q,
 
-            run_params, potential);
+            run_params, potential, 0);
     #else
         K_CUDA_Coulomb_PP(
             call_type, num_sources,
@@ -122,7 +122,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, potential);
+            run_params, potential, 0);
     #endif
 #else
         K_Coulomb_PP(
@@ -220,7 +220,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             s_source_x, s_source_y, s_source_z, s_source_q,
 
-            run_params, potential);
+            run_params, potential, 0);
     #else
         K_CUDA_DCF_PP(
             call_type, num_sources,
@@ -236,7 +236,7 @@ void InteractionCompute_Direct(double *potential,
             num_sources, 0,
             source_x, source_y, source_z, source_q,
 
-            run_params, potential);
+            run_params, potential, 0);
     #endif
 #else
         K_DCF_PP(

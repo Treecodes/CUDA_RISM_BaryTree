@@ -20,7 +20,7 @@ void K_CUDA_DCF_PP(
     int number_of_source_points_in_cluster, int starting_index_of_source,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
 
-    struct RunParams *run_params, double *potential);
+    struct RunParams *run_params, double *potential, int stream_id);
 #ifdef __CUDACC__
 }
 #endif
