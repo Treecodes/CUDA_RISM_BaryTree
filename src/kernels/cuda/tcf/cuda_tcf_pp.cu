@@ -224,8 +224,7 @@ void K_CUDA_TCF_PP(
     FLOAT target_xdd,     FLOAT target_ydd,     FLOAT target_zdd,
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
     int cluster_num_sources, int cluster_idx_start,
-    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    struct RunParams *run_params, double *potential, int stream_id)
+    struct RunParams *run_params, int stream_id)
 {
     int target_yz_dim_glob = target_y_dim_glob * target_z_dim_glob;
     FLOAT kap = (FLOAT)run_params->kernel_params[0];
@@ -241,8 +240,6 @@ void K_CUDA_TCF_PP(
                  (target_y_dim-1)/threadsperblock + 1,
                  (target_z_dim-1)/threadsperblock + 1);
 
-    // RQ - test with/without stream
-    //CUDA_TCF_PP<<<nblocks,nthreads>>>(eta, kap, kap_eta_2,
     CUDA_TCF_PP<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
                     cluster_num_sources, cluster_idx_start,
                     target_x_low_ind, target_y_low_ind, target_z_low_ind,
@@ -251,8 +248,6 @@ void K_CUDA_TCF_PP(
                     target_xmin, target_ymin, target_zmin,
                     target_xdd, target_ydd, target_zdd,
                     d_source_x, d_source_y, d_source_z, d_source_q, d_potential);
-    //cudaDeviceSynchronize();
-    //cudaStreamSynchronize(stream[stream_id]);
 
     return;
 

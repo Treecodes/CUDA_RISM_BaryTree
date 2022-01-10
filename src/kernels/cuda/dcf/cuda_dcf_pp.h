@@ -18,9 +18,8 @@ void K_CUDA_DCF_PP(
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
 
     int number_of_source_points_in_cluster, int starting_index_of_source,
-    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
 
-    struct RunParams *run_params, double *potential, int stream_id);
+    struct RunParams *run_params, int stream_id);
 #ifdef __CUDACC__
 }
 #endif

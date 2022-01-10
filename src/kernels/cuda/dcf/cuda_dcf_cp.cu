@@ -19,14 +19,13 @@ void CUDA_DCF_CP_Lagrange(FLOAT eta, int batch_num_sources, int batch_idx_start,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
     FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, FLOAT *potential)
 {
-
     int k1 = threadIdx.x + blockDim.x * blockIdx.x;
     int k2 = threadIdx.y + blockDim.y * blockIdx.y;
     int k3 = threadIdx.z + blockDim.z * blockIdx.z;
 
     if ( k1 >=0 && k1 < interp_order_lim &&
          k2 >=0 && k2 < interp_order_lim &&
-         k3 >=0 && k3 < interp_order_lim ){
+         k3 >=0 && k3 < interp_order_lim ) {
 
         FLOAT temporary_potential = 0.0;
 
@@ -43,13 +42,11 @@ void CUDA_DCF_CP_Lagrange(FLOAT eta, int batch_num_sources, int batch_idx_start,
             FLOAT dz = cz - source_z[jj];
             FLOAT r = sqrt(dx*dx + dy*dy + dz*dz);
 
-         if (r > DBL_MIN) {
-            temporary_potential += source_q[jj] * erf(r / eta) / r;
-         }
+            if (r > DBL_MIN) temporary_potential += source_q[jj] * erf(r / eta) / r;
         }
         potential[ii] += temporary_potential;
     }
- return;
+    return;
 }
 
 __host__
@@ -57,13 +54,9 @@ void K_CUDA_DCF_CP_Lagrange(
     int call_type, int num_source, int num_cluster,
     int batch_num_sources, int batch_idx_start, 
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
-    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, double *cluster_q,
     struct RunParams *run_params, int stream_id)
 {
     FLOAT eta = (FLOAT)run_params->kernel_params[0];
-
-    //printf("CUDA received call_type: %d\n", call_type);
 
     int threadsperblock = 8;
     dim3 nthreads(threadsperblock, threadsperblock, threadsperblock);
@@ -75,7 +68,6 @@ void K_CUDA_DCF_CP_Lagrange(
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     d_source_x,  d_source_y,  d_source_z,  d_source_q,
                     d_cluster_x, d_cluster_y, d_cluster_z, d_cluster_q);
-
 
     return;
 }

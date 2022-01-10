@@ -44,13 +44,11 @@ void CUDA_Coulomb_CP_Lagrange(int batch_num_sources, int batch_idx_start,
             FLOAT dz = cz - source_z[jj];
             FLOAT r = sqrt(dx*dx + dy*dy + dz*dz);
 
-         if (r > DBL_MIN) {
-          temporary_potential += source_q[jj] / r;
+            if (r > DBL_MIN) temporary_potential += source_q[jj] / r;
+         }
+         potential[ii]+=temporary_potential;
     }
-}
-   potential[ii]+=temporary_potential;
-}
-return;
+    return;
 }
 
 
@@ -59,11 +57,8 @@ void K_CUDA_Coulomb_CP_Lagrange(
     int call_type, int num_source, int num_cluster,
     int batch_num_sources, int batch_idx_start, 
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
-    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, double *cluster_q,
     struct RunParams *run_params, int stream_id)
 {
-
     int threadsperblock = 8;
     dim3 nthreads(threadsperblock, threadsperblock, threadsperblock);
     dim3 nblocks((interp_order_lim-1)/threadsperblock + 1,
@@ -74,7 +69,6 @@ void K_CUDA_Coulomb_CP_Lagrange(
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     d_source_x,  d_source_y,  d_source_z,  d_source_q,
                     d_cluster_x, d_cluster_y, d_cluster_z, d_cluster_q);
-
 
     return;
 }

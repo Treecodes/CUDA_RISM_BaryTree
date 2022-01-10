@@ -63,8 +63,6 @@ void K_CUDA_TCF_CP_Lagrange(
     int call_type, int num_source, int num_cluster, int num_charge,
     int batch_num_sources, int batch_idx_start, 
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
-    FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, double *cluster_q,
     struct RunParams *run_params, int stream_id)
 {
     FLOAT kap = (FLOAT)run_params->kernel_params[0];
@@ -76,12 +74,12 @@ void K_CUDA_TCF_CP_Lagrange(
     dim3 nblocks((interp_order_lim-1)/threadsperblock + 1,
                  (interp_order_lim-1)/threadsperblock + 1,
                  (interp_order_lim-1)/threadsperblock + 1);
+
     CUDA_TCF_CP_Lagrange<<<nblocks,nthreads,0,stream[stream_id]>>>(eta, kap, kap_eta_2,
                     batch_num_sources, batch_idx_start,
                     cluster_q_start, cluster_pts_start, interp_order_lim,
                     d_source_x,  d_source_y,  d_source_z,  d_source_q,
                     d_cluster_x, d_cluster_y, d_cluster_z, d_cluster_q);
-    //cudaStreamSynchronize(stream[stream_id]);
 
     return;
 }
