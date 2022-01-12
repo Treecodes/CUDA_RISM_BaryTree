@@ -104,9 +104,9 @@ void CUDA_Setup(int call_type,
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-        cudaErr = cudaMemcpy(d_potential, potential, sizeof(FLOAT)*target_xyz_dim, cudaMemcpyHostToDevice);
+        cudaErr = cudaMemset(d_potential, 0, sizeof(FLOAT)*target_xyz_dim);
         if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+            printf("Device Memset failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         //printf("CUDA copied data into device %d %d\n", num_source, target_xyz_dim);
     }
 
@@ -120,9 +120,10 @@ void CUDA_Setup(int call_type,
         cudaErr = cudaMemcpy(d_cluster_z, cluster_z, sizeof(FLOAT)*num_cluster, cudaMemcpyHostToDevice);
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
-        cudaErr = cudaMemcpy(d_cluster_q, cluster_q, sizeof(FLOAT)*num_charge, cudaMemcpyHostToDevice);
+
+        cudaErr = cudaMemset(d_cluster_q, 0, sizeof(FLOAT)*num_charge);
         if ( cudaErr != cudaSuccess )
-            printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
+            printf("Device Memset failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         //printf("CUDA copied data into device %d %d\n", num_cluster, num_charge);
     }
     return;
