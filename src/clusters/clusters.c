@@ -14,6 +14,16 @@
 
 #include "struct_clusters.h"
 #include "clusters.h"
+#ifdef CUDA_ENABLED
+    #ifdef SINGLE
+        #define FLOAT float
+    #else
+        #define FLOAT double
+    #endif
+#include "cuda_interp.h"
+#include "../kernels/cuda/tcf/cuda_tcf.h"
+#endif
+
 
 
 static void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrder,
@@ -118,13 +128,28 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     double *zC = clusters->z;
     double *qC = clusters->q;
 
+#ifdef CUDA_ENABLED
+    initStream();
+    CUDA_Setup_Interp(totalNumberInterpolationPoints, xC, yC, zC);
+#endif
+
+
 
     for (int i = 0; i < tree_numnodes; i++) {
         if ((tree->used_children[i] > 0 && (tree->used[i] == 1 || tree->used_parent[i] == 1))
           || tree->used_leaf[i] == 1) {
+#ifdef CUDA_ENABLED
+            int stream_id = i%8;
+            K_CUDA_COMP_INTERP(tree, i, interpolationOrder,
+           stream_id);
+#else
             cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
+#endif
         }
     }
+#ifdef CUDA_ENABLED
+CUDA_Free_Interp(totalNumberInterpolationPoints, xC, yC, zC);
+#endif 
     
     return;
 }
