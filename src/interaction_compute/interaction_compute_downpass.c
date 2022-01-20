@@ -155,7 +155,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                     for (int k = 0; k < tree->num_children[idx]; ++k) {
                         int child_idx = tree->children[8*idx + k];
 #ifdef CUDA_ENABLED
-                        int stream_id = k%8;
+                        int stream_id = k%16;
                         K_CUDA_CP_COMP_DOWNPASS(idx, child_idx, interp_order,
                                          coeff_start, stream_id);
 #else

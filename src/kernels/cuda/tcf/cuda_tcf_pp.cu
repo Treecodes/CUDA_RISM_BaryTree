@@ -14,7 +14,7 @@
 #include "device_vars.h"
 
 cudaError_t cudaErr;
-cudaStream_t stream[256];
+cudaStream_t stream[512];
 FLOAT *d_source_x;
 FLOAT *d_source_y;
 FLOAT *d_source_z;
@@ -29,7 +29,7 @@ FLOAT *d_cluster_q;
 extern "C"
 void initStream()
 {
-    for (int i = 0; i < 256; ++i) {
+    for (int i = 0; i < 512; ++i) {
         cudaErr = cudaStreamCreate(&stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream creation failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -39,7 +39,7 @@ void initStream()
 extern "C"
 void delStream()
 {
-    for (int i = 0; i < 256; ++i) {
+    for (int i = 0; i < 512; ++i) {
         cudaErr = cudaStreamDestroy(stream[i]);
         if ( cudaErr != cudaSuccess )
             printf("Stream destruction failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
@@ -170,7 +170,7 @@ static void CUDA_TCF_PP(
     FLOAT target_xmin, FLOAT target_ymin, FLOAT target_zmin,
     FLOAT target_xdd, FLOAT target_ydd, FLOAT target_zdd,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *potential)
+    double *potential)
 {
     // ix/iy/iz always start from 0
     int ix = threadIdx.x + blockDim.x * blockIdx.x;
@@ -208,8 +208,7 @@ static void CUDA_TCF_PP(
             }
 
         }
-        potential[ii] += temporary_potential;
-
+        atomicAdd(potential+ii, temporary_potential);
     }
 
     return;
@@ -217,7 +216,7 @@ static void CUDA_TCF_PP(
 
 __host__
 void K_CUDA_TCF_PP(
-    int call_type,         int num_source,
+    int num_source,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,

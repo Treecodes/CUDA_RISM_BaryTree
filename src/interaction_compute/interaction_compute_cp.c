@@ -137,7 +137,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
 
-            int stream_id = (i*num_approx_in_batch+j)%256;
+            int stream_id = (i*num_approx_in_batch+j)%512;
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -148,21 +148,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-    #ifdef SINGLE
                     K_CUDA_Coulomb_CP_Lagrange(
-                        call_type, num_source, num_cluster,
+                        num_source, num_cluster,
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
                         interp_order_lim,
                         run_params, stream_id);
-    #else
-                    K_CUDA_Coulomb_CP_Lagrange(
-                        call_type, num_source, num_cluster,
-                        batch_num_sources, batch_idx_start,
-                        cluster_q_start, cluster_pts_start,
-                        interp_order_lim,
-                        run_params, stream_id);
-    #endif
 #else
                     K_Coulomb_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -187,21 +178,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-    #ifdef SINGLE
                     K_CUDA_TCF_CP_Lagrange(
-                        call_type, num_source, num_cluster, num_charge,
+                        num_source, num_cluster, num_charge,
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
                         interp_order_lim,
                         run_params, stream_id);
-    #else
-                    K_CUDA_TCF_CP_Lagrange(
-                        call_type, num_source, num_cluster, num_charge,
-                        batch_num_sources, batch_idx_start,
-                        cluster_q_start, cluster_pts_start,
-                        interp_order_lim,
-                        run_params, stream_id);
-    #endif
 #else
                     K_TCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -226,21 +208,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 if (run_params->approximation == LAGRANGE) {
 
 #ifdef CUDA_ENABLED
-    #ifdef SINGLE
                     K_CUDA_DCF_CP_Lagrange(
-                        call_type, num_source, num_cluster,
+                        num_source, num_cluster,
                         batch_num_sources, batch_idx_start,
                         cluster_q_start, cluster_pts_start,
                         interp_order_lim,
                         run_params, stream_id);
-    #else
-                    K_CUDA_DCF_CP_Lagrange(
-                        call_type, num_source, num_cluster,
-                        batch_num_sources, batch_idx_start,
-                        cluster_q_start, cluster_pts_start,
-                        interp_order_lim,
-                        run_params, stream_id);
-    #endif
 #else
                     K_DCF_CP_Lagrange(
                         batch_num_sources, batch_idx_start,
@@ -259,23 +232,24 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
         } // end loop over cluster approximations
 
-//    } // end loop over target batches
-//
+    } // end loop over target batches
+
 //
 /* * ********************************************************/
 /* * ************ POTENTIAL FROM DIRECT *********************/
 /* * ********************************************************/
 //
-//    for (int i = 0; i < batches->numnodes; i++) {
-//    
-//        int batch_ibeg = batches->ibeg[i];
-//        int batch_iend = batches->iend[i];
-//        
-//        int num_approx_in_batch = num_approx[i];
-//        int num_direct_in_batch = num_direct[i];
-//
-//        int batch_num_sources = batch_iend - batch_ibeg + 1;
-//        int batch_idx_start =  batch_ibeg - 1;
+
+    for (int i = 0; i < batches->numnodes; i++) {
+    
+        int batch_ibeg = batches->ibeg[i];
+        int batch_iend = batches->iend[i];
+        
+        int num_approx_in_batch = num_approx[i];
+        int num_direct_in_batch = num_direct[i];
+
+        int batch_num_sources = batch_iend - batch_ibeg + 1;
+        int batch_idx_start =  batch_ibeg - 1;
 
         for (int j = 0; j < num_direct_in_batch; j++) {
 
@@ -293,7 +267,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             double target_y_min = target_tree_y_min[node_index];
             double target_z_min = target_tree_z_min[node_index];
 
-            int stream_id = (i*num_approx_in_batch+j)%256;
+            int stream_id = (i*num_approx_in_batch+j)%128;
 
     /* * *********************************************/
     /* * *************** Coulomb *********************/
@@ -304,7 +278,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef CUDA_ENABLED
     #ifdef SINGLE
                 K_CUDA_Coulomb_PP(
-                    call_type, num_source,
+                    num_source,
 
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -319,7 +293,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     run_params, stream_id);
     #else
                 K_CUDA_Coulomb_PP(
-                    call_type, num_source,
+                    num_source,
 
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -359,7 +333,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef CUDA_ENABLED
     #ifdef SINGLE
                 K_CUDA_TCF_PP(
-                    call_type, num_source,
+                    num_source,
 
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -374,7 +348,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     run_params, stream_id);
     #else
                 K_CUDA_TCF_PP(
-                    call_type, num_source,
+                    num_source,
 
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -414,7 +388,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef CUDA_ENABLED
     #ifdef SINGLE
                 K_CUDA_DCF_PP(
-                    call_type, num_source,
+                    num_source,
 
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,
@@ -429,7 +403,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     run_params, stream_id);
     #else
                 K_CUDA_DCF_PP(
-                    call_type, num_source,
+                    num_source,
 
                     target_x_low_ind, target_x_high_ind,
                     target_y_low_ind, target_y_high_ind,

@@ -19,7 +19,8 @@ void  CUDA_TCF_CP_Lagrange(
     int batch_num_sources, int batch_idx_start,
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, FLOAT *potential)
+    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z,
+    double *potential)
 {
     int k1 = threadIdx.x + blockDim.x * blockIdx.x;
     int k2 = threadIdx.y + blockDim.y * blockIdx.y;
@@ -53,14 +54,14 @@ void  CUDA_TCF_CP_Lagrange(
                                      -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
             }
         } // end loop over interpolation points
-        potential[ii] += temporary_potential;
+        atomicAdd(potential+ii, temporary_potential);
     }
     return;
 }
 
 __host__
 void K_CUDA_TCF_CP_Lagrange(
-    int call_type, int num_source, int num_cluster, int num_charge,
+    int num_source, int num_cluster, int num_charge,
     int batch_num_sources, int batch_idx_start, 
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     struct RunParams *run_params, int stream_id)

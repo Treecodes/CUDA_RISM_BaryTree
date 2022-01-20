@@ -141,14 +141,14 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
 #ifdef CUDA_ENABLED
             int stream_id = i%8;
             K_CUDA_COMP_INTERP(tree, i, interpolationOrder,
-           stream_id);
+            stream_id);
 #else
             cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
 #endif
         }
     }
 #ifdef CUDA_ENABLED
-CUDA_Free_Interp(totalNumberInterpolationPoints, xC, yC, zC);
+    CUDA_Free_Interp(totalNumberInterpolationPoints, xC, yC, zC);
 #endif 
     
     return;

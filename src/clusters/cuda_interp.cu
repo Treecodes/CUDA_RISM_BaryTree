@@ -47,7 +47,9 @@ void CUDA_Setup_Interp(
 }
 
 extern "C"
-void CUDA_Free_Interp(int totalNumberInterpolationPoints,FLOAT *xC, FLOAT *yC, FLOAT *zC)
+void CUDA_Free_Interp(
+    int totalNumberInterpolationPoints,
+    FLOAT *xC, FLOAT *yC, FLOAT *zC)
 {
     cudaErr = cudaMemcpy(xC, d_xC, sizeof(FLOAT)*totalNumberInterpolationPoints, cudaMemcpyDeviceToHost);
     if ( cudaErr != cudaSuccess )
@@ -71,16 +73,16 @@ void CUDA_Free_Interp(int totalNumberInterpolationPoints,FLOAT *xC, FLOAT *yC, F
 
 __global__ 
 static void CUDA_COMP_INTERP(
-    int interp_order_lim,int cluster_ind_start, FLOAT x0, FLOAT x1, FLOAT y0, FLOAT y1,
+    int interp_order_lim, int cluster_ind_start,
+    FLOAT x0, FLOAT x1, FLOAT y0, FLOAT y1,
     FLOAT z0, FLOAT z1, FLOAT *xC, FLOAT *yC, FLOAT *zC)
 {
     int i = threadIdx.x + blockDim.x * blockIdx.x;
     if (i < interp_order_lim) { // loop over interpolation points, set (cx,cy,cz) for this point
-        
-      FLOAT tt = cos(i * M_PI / (interp_order_lim - 1));
-       xC[cluster_ind_start + i] = x0 + (tt + 1.0)/2.0 * (x1 - x0); 
-       yC[cluster_ind_start + i] = y0 + (tt + 1.0)/2.0 * (y1 - y0); 
-       zC[cluster_ind_start + i] = z0 + (tt + 1.0)/2.0 * (z1 - z0); 
+        FLOAT tt = cos(i * M_PI / (interp_order_lim - 1));
+        xC[cluster_ind_start + i] = x0 + (tt + 1.0)/2.0 * (x1 - x0); 
+        yC[cluster_ind_start + i] = y0 + (tt + 1.0)/2.0 * (y1 - y0); 
+        zC[cluster_ind_start + i] = z0 + (tt + 1.0)/2.0 * (z1 - z0); 
     }
 
     return;
@@ -100,8 +102,6 @@ void K_CUDA_COMP_INTERP(
     FLOAT y1 = tree->y_max[idx];
     FLOAT z0 = tree->z_min[idx];
     FLOAT z1 = tree->z_max[idx];
-    
-
 
     int cluster_ind_start   = idx * interp_order_lim;
 

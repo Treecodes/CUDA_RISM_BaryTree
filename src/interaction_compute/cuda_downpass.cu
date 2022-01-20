@@ -76,7 +76,8 @@ __global__
 static void CUDA_CP_COMP_DOWNPASS(
     int interp_pts_per_cluster, int interp_order_lim,
     int coeff_start_ind, int cluster_charge_start, int child_cluster_charge_start,
-    FLOAT *coeff_x, FLOAT *coeff_y, FLOAT *coeff_z, FLOAT *cluster_q)
+    FLOAT *coeff_x, FLOAT *coeff_y, FLOAT *coeff_z,
+    double *cluster_q)
 {
     int i = threadIdx.x + blockDim.x * blockIdx.x;
     if (i < interp_pts_per_cluster) { // loop over interpolation points, set (cx,cy,cz) for this point
@@ -144,7 +145,7 @@ static void CUDA_CP_COMP_POT(
     int target_yz_dim, int target_z_dim_glob,
     int coeff_x_start, int coeff_y_start, int coeff_z_start,
     FLOAT *coeff_x, FLOAT *coeff_y, FLOAT *coeff_z,
-    FLOAT *cluster_q, FLOAT *potential)
+    double *cluster_q, double *potential)
 {
     int interp_order_lim = interp_order + 1;
     int orderlim3 = interp_order_lim*interp_order_lim*interp_order_lim;

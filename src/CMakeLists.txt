@@ -146,7 +146,7 @@ if(ENABLE_GPU_BUILD)
                                              CUDA_ENABLED)
         set_target_properties(     ${TRGT} PROPERTIES
                                              POSITION_INDEPENDENT_CODE ON
-                                             CUDA_ARCHITECTURES "70")
+                                             CUDA_ARCHITECTURES "75")
         target_compile_features(   ${TRGT} PUBLIC
                                              c_std_99)
         target_link_libraries(     ${TRGT} PUBLIC

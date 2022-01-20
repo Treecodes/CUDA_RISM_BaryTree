@@ -53,7 +53,7 @@ static void CUDA_Coulomb_PP(
                 temporary_potential += source_q[jj] / r;
             }
         }
-        potential[ii]+= temporary_potential;
+        atomicAdd(potential+ii, temporary_potential);
     }
 
     return;
@@ -62,7 +62,7 @@ static void CUDA_Coulomb_PP(
 
 __host__
 void K_CUDA_Coulomb_PP(
-    int call_type,         int num_source,
+    int num_source,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,

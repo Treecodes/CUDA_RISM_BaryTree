@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 void K_CUDA_DCF_PP(
-    int call_type,         int num_source,
+    int num_source,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,
