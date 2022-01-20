@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-//#define SINGLE
+#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
@@ -15,15 +15,15 @@
 
 cudaError_t cudaErr;
 cudaStream_t stream[512];
+double *d_potential;
+double *d_cluster_q;
 FLOAT *d_source_x;
 FLOAT *d_source_y;
 FLOAT *d_source_z;
 FLOAT *d_source_q;
-FLOAT *d_potential;
 FLOAT *d_cluster_x;
 FLOAT *d_cluster_y;
 FLOAT *d_cluster_z;
-FLOAT *d_cluster_q;
 
 // RQ - initialize streams
 extern "C"
@@ -68,7 +68,7 @@ void CUDA_Setup(int call_type,
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-        cudaErr = cudaMalloc(&d_potential, sizeof(FLOAT)*target_xyz_dim);
+        cudaErr = cudaMalloc(&d_potential, sizeof(double)*target_xyz_dim);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
     }
@@ -84,7 +84,7 @@ void CUDA_Setup(int call_type,
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-        cudaErr = cudaMalloc(&d_cluster_q, sizeof(FLOAT)*num_charge);
+        cudaErr = cudaMalloc(&d_cluster_q, sizeof(double)*num_charge);
         if ( cudaErr != cudaSuccess )
             printf("Device malloc failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
     }
@@ -104,7 +104,7 @@ void CUDA_Setup(int call_type,
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-        cudaErr = cudaMemset(d_potential, 0, sizeof(FLOAT)*target_xyz_dim);
+        cudaErr = cudaMemset(d_potential, 0, sizeof(double)*target_xyz_dim);
         if ( cudaErr != cudaSuccess )
             printf("Device Memset failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         //printf("CUDA copied data into device %d %d\n", num_source, target_xyz_dim);
@@ -121,7 +121,7 @@ void CUDA_Setup(int call_type,
         if ( cudaErr != cudaSuccess )
             printf("Host to Device MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
-        cudaErr = cudaMemset(d_cluster_q, 0, sizeof(FLOAT)*num_charge);
+        cudaErr = cudaMemset(d_cluster_q, 0, sizeof(double)*num_charge);
         if ( cudaErr != cudaSuccess )
             printf("Device Memset failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
         //printf("CUDA copied data into device %d %d\n", num_cluster, num_charge);
@@ -137,7 +137,7 @@ void CUDA_Free(int call_type,
     // for direct sum we are done. copy potential back to host
     if ( call_type == 3 ) {
         cudaErr = cudaMemcpy(potential, d_potential,
-                             target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
+                             target_xyz_dim * sizeof(double), cudaMemcpyDeviceToHost);
         if ( cudaErr != cudaSuccess )
             printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 
@@ -199,16 +199,18 @@ static void CUDA_TCF_PP(
             FLOAT dz = tz - source_z[jj];
             FLOAT r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                FLOAT kap_r = kap * r;
-                FLOAT r_eta = r / eta;
-                temporary_potential += source_q[jj] / r 
-                                     *(exp(-kap_r) * erfc(kap_eta_2 - r_eta)
-                                     - exp( kap_r) * erfc(kap_eta_2 + r_eta));
-            }
+            //if (r > DBL_MIN) {
+            FLOAT kap_r = kap * r;
+            FLOAT r_eta = r / eta;
+            temporary_potential += source_q[jj] / r 
+                                 *(exp(-kap_r) * erfc(kap_eta_2 - r_eta)
+                                 - exp( kap_r) * erfc(kap_eta_2 + r_eta));
+            //}
 
         }
-        atomicAdd(potential+ii, temporary_potential);
+
+        atomicAdd(potential+ii, (double)temporary_potential);
+
     }
 
     return;

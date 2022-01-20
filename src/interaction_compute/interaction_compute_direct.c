@@ -14,7 +14,7 @@
 #include "../kernels/dcf/dcf.h"
 
 #ifdef CUDA_ENABLED
-    //#define SINGLE
+    #define SINGLE
     #ifdef SINGLE
         #define FLOAT float
     #else
@@ -51,32 +51,37 @@ void InteractionCompute_Direct(double *potential,
     int target_ydim = targets->ydim;
     int target_zdim = targets->zdim;
 
-#ifdef SINGLE
-    float *s_source_x  = (float*)malloc(sizeof(float)*num_sources);
-    float *s_source_y  = (float*)malloc(sizeof(float)*num_sources);
-    float *s_source_z  = (float*)malloc(sizeof(float)*num_sources);
-    float *s_source_q  = (float*)malloc(sizeof(float)*num_sources);
-
-    for (int i = 0; i < num_sources-1; i++) {
-        s_source_x[i] = source_x[i];
-        s_source_y[i] = source_y[i];
-        s_source_z[i] = source_z[i];
-        s_source_q[i] = source_q[i];
-    }
-#endif
-
 #ifdef CUDA_ENABLED
     int call_type = 3;
     int target_xyz_dim = target_xdim*target_ydim*target_zdim;
     int num_clusters = 1;
     int num_charges = 1;
-    double *cluster_x = NULL;
-    double *cluster_y = NULL;
-    double *cluster_z = NULL;
+    FLOAT *cluster_x = NULL;
+    FLOAT *cluster_y = NULL;
+    FLOAT *cluster_z = NULL;
     double *cluster_q = NULL;
+
+    #ifdef SINGLE
+    float *s_source_x  = (float*)malloc(sizeof(float)*num_sources);
+    float *s_source_y  = (float*)malloc(sizeof(float)*num_sources);
+    float *s_source_z  = (float*)malloc(sizeof(float)*num_sources);
+    float *s_source_q  = (float*)malloc(sizeof(float)*num_sources);
+
+    for (int i = 0; i < num_sources; i++) {
+        s_source_x[i] = source_x[i];
+        s_source_y[i] = source_y[i];
+        s_source_z[i] = source_z[i];
+        s_source_q[i] = source_q[i];
+    }
+
+    CUDA_Setup(call_type, num_sources, num_clusters, num_charges, target_xyz_dim,
+               s_source_x, s_source_y, s_source_z, s_source_q, cluster_x, cluster_y, cluster_z,
+               cluster_q, potential);
+    #else
     CUDA_Setup(call_type, num_sources, num_clusters, num_charges, target_xyz_dim,
                source_x, source_y, source_z, source_q, cluster_x, cluster_y, cluster_z,
                cluster_q, potential);
+    #endif
 #endif
 
 /* * ********************************************************/
@@ -252,12 +257,22 @@ void InteractionCompute_Direct(double *potential,
 
 #ifdef CUDA_ENABLED
     CUDA_Free(call_type, num_charges, target_xyz_dim, cluster_q, potential);
-#endif
-#ifdef SINGLE
+    #ifdef SINGLE
     free(s_source_x );
     free(s_source_y );
     free(s_source_z );
     free(s_source_q );
+    #endif
 #endif
+    // debugging direct potentials
+//    int target_yzdim = target_ydim*target_zdim;
+//    for (int ix = 0; ix <= target_xdim-1; ix++) {
+//        for (int iy = 0; iy <= target_ydim-1; iy++) {
+//            for (int iz = 0; iz <= target_zdim-1; iz++) {
+//                int ii = (ix * target_yzdim) + (iy * target_zdim) + iz;
+//                printf("returned potential, %d %15.6e\n", ii, potential[ii]);
+//            }
+//        }
+//    }
     return;
 }

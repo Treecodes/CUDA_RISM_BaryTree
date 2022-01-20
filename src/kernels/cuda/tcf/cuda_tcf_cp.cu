@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-//#define SINGLE
+#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
@@ -46,15 +46,18 @@ void  CUDA_TCF_CP_Lagrange(
             FLOAT dz = cz - source_z[jj];
             FLOAT r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                FLOAT kap_r = kap * r;
-                FLOAT r_eta = r / eta;
-                temporary_potential += source_q[jj] / r
-                                     * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
-                                     -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
-            }
+            //if (r > DBL_MIN) {
+            FLOAT kap_r = kap * r;
+            FLOAT r_eta = r / eta;
+            temporary_potential += source_q[jj] / r
+                                 * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
+                                 -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
+            //}
+
         } // end loop over interpolation points
-        atomicAdd(potential+ii, temporary_potential);
+
+        atomicAdd(potential+ii, (double)temporary_potential);
+
     }
     return;
 }

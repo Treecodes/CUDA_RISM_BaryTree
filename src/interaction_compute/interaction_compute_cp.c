@@ -16,7 +16,7 @@
 #include "../kernels/dcf/dcf.h"
 
 #ifdef CUDA_ENABLED
-    //#define SINGLE
+    #define SINGLE
     #ifdef SINGLE
         #define FLOAT float
     #else
@@ -82,7 +82,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     double target_ydd = targets->ydd;
     double target_zdd = targets->zdd;
 
-#ifdef SINGLE
+#ifdef CUDA_ENABLED
+    // RQ: Initialize the streams
+    initStream();
+    int call_type = 1;
+    int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
+
+    #ifdef SINGLE
     float *s_source_x  = (float*)malloc(sizeof(float)*num_source);
     float *s_source_y  = (float*)malloc(sizeof(float)*num_source);
     float *s_source_z  = (float*)malloc(sizeof(float)*num_source);
@@ -91,27 +97,26 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     float *s_cluster_y = (float*)malloc(sizeof(float)*num_cluster);
     float *s_cluster_z = (float*)malloc(sizeof(float)*num_cluster);
 
-    for (int i = 0; i < num_source-1; i++) {
+    for (int i = 0; i < num_source; i++) {
         s_source_x[i] = source_x[i];
         s_source_y[i] = source_y[i];
         s_source_z[i] = source_z[i];
         s_source_q[i] = source_q[i];
     }
-    for (int i = 0; i < num_cluster-1; i++) {
+    for (int i = 0; i < num_cluster; i++) {
         s_cluster_x[i] = cluster_x[i];
         s_cluster_y[i] = cluster_y[i];
         s_cluster_z[i] = cluster_z[i];
     }
-#endif
 
-#ifdef CUDA_ENABLED
-    // RQ: Initialize the streams
-    int call_type = 1;
-    int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
+    CUDA_Setup(call_type, num_source, num_cluster, num_charge, target_xyz_dim,
+               s_source_x, s_source_y, s_source_z, s_source_q, s_cluster_x, s_cluster_y, s_cluster_z,
+               cluster_q, potential);
+    #else
     CUDA_Setup(call_type, num_source, num_cluster, num_charge, target_xyz_dim,
                source_x, source_y, source_z, source_q, cluster_x, cluster_y, cluster_z,
                cluster_q, potential);
-    initStream();
+    #endif
 #endif
 
 
@@ -445,6 +450,16 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     // RL: Release device memories
     delStream();
     CUDA_Free(call_type, num_charge, target_xyz_dim, cluster_q, potential);
+
+    #ifdef SINGLE
+    free(s_source_x );
+    free(s_source_y );
+    free(s_source_z );
+    free(s_source_q );
+    free(s_cluster_x);
+    free(s_cluster_y);
+    free(s_cluster_z);
+    #endif
 #endif
 
     // debugging cluster potentials
@@ -470,16 +485,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 //            }
 //        }
 //    }
-
-#ifdef SINGLE
-    free(s_source_x );
-    free(s_source_y );
-    free(s_source_z );
-    free(s_source_q );
-    free(s_cluster_x);
-    free(s_cluster_y);
-    free(s_cluster_z);
-#endif
 
     return;
 

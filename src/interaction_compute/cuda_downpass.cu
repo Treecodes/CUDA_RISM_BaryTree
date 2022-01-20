@@ -61,7 +61,7 @@ extern "C"
 void CUDA_Wrapup(int target_xyz_dim, double *potential)
 {
     cudaErr = cudaMemcpy(potential, d_potential,
-                         target_xyz_dim * sizeof(FLOAT), cudaMemcpyDeviceToHost);
+                         target_xyz_dim * sizeof(double), cudaMemcpyDeviceToHost);
     if ( cudaErr != cudaSuccess )
         printf("Device to Host MemCpy failed with error \"%s\".\n", cudaGetErrorString(cudaErr));
 

@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-//#define SINGLE
+#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
@@ -17,7 +17,8 @@ __global__
 void CUDA_DCF_CP_Lagrange(FLOAT eta, int batch_num_sources, int batch_idx_start,
     int cluster_q_start, int cluster_pts_start, int interp_order_lim,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z, FLOAT *potential)
+    FLOAT *cluster_x, FLOAT *cluster_y, FLOAT *cluster_z,
+    double *potential)
 {
     int k1 = threadIdx.x + blockDim.x * blockIdx.x;
     int k2 = threadIdx.y + blockDim.y * blockIdx.y;
@@ -42,9 +43,13 @@ void CUDA_DCF_CP_Lagrange(FLOAT eta, int batch_num_sources, int batch_idx_start,
             FLOAT dz = cz - source_z[jj];
             FLOAT r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) temporary_potential += source_q[jj] * erf(r / eta) / r;
+            //if (r > DBL_MIN)
+            temporary_potential += source_q[jj] * erf(r / eta) / r;
+
         }
-        atomicAdd(potential+ii, temporary_potential);
+
+        atomicAdd(potential+ii, (double)temporary_potential);
+
     }
     return;
 }

@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-//#define SINGLE
+#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
@@ -22,7 +22,7 @@ static void CUDA_Coulomb_PP(
     FLOAT target_xmin, FLOAT target_ymin, FLOAT target_zmin,
     FLOAT target_xdd, FLOAT target_ydd, FLOAT target_zdd,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *potential)
+    double *potential)
 {
     int ix = threadIdx.x + blockDim.x * blockIdx.x;
     int iy = threadIdx.y + blockDim.y * blockIdx.y;
@@ -49,11 +49,14 @@ static void CUDA_Coulomb_PP(
             FLOAT dy = ty - source_y[jj];
             FLOAT dz = tz - source_z[jj];
             FLOAT r  = sqrt(dx*dx + dy*dy + dz*dz);
-            if (r > DBL_MIN) {
-                temporary_potential += source_q[jj] / r;
-            }
+
+            //if (r > DBL_MIN)
+            temporary_potential += source_q[jj] / r;
+
         }
-        atomicAdd(potential+ii, temporary_potential);
+
+        atomicAdd(potential+ii, (double)temporary_potential);
+
     }
 
     return;

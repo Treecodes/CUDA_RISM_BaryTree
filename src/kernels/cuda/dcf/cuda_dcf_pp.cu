@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-//#define SINGLE
+#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
@@ -23,7 +23,7 @@ static void CUDA_DCF_PP(
     FLOAT target_xmin, FLOAT target_ymin, FLOAT target_zmin,
     FLOAT target_xdd, FLOAT target_ydd, FLOAT target_zdd,
     FLOAT *source_x, FLOAT *source_y, FLOAT *source_z, FLOAT *source_q,
-    FLOAT *potential)
+    double *potential)
 {
     int ix = threadIdx.x + blockDim.x * blockIdx.x;
     int iy = threadIdx.y + blockDim.y * blockIdx.y;
@@ -51,9 +51,13 @@ static void CUDA_DCF_PP(
             FLOAT dz = tz - source_z[jj];
             FLOAT r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) temporary_potential += source_q[jj] * erf(r / eta) / r;
+            //if (r > DBL_MIN)
+            temporary_potential += source_q[jj] * erf(r / eta) / r;
+
         }
-        atomicAdd(potential+ii, temporary_potential);
+
+        atomicAdd(potential+ii, (double)temporary_potential);
+
     }
 
     return;
