@@ -12,6 +12,7 @@
 #include "interaction_compute.h"
 
 #ifdef CUDA_ENABLED
+    #define SINGLE
     #ifdef SINGLE
         #define FLOAT float
     #else
@@ -142,8 +143,21 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 }
                 
 #ifdef CUDA_ENABLED
+    #ifdef SINGLE
+                float *s_coeff_x  = (float*)malloc(sizeof(float)*sizeof_coeffs);
+                float *s_coeff_y  = (float*)malloc(sizeof(float)*sizeof_coeffs);
+                float *s_coeff_z  = (float*)malloc(sizeof(float)*sizeof_coeffs);
+                for (int k = 0; k < sizeof_coeffs; k++) {
+                    s_coeff_x[k] = coeff_x[k];
+                    s_coeff_y[k] = coeff_y[k];
+                    s_coeff_z[k] = coeff_z[k];
+                }
+                CUDA_Setup2(sizeof_coeffs, sizeof_coeffs, sizeof_coeffs,
+                        s_coeff_x, s_coeff_y, s_coeff_z);
+    #else
                 CUDA_Setup2(sizeof_coeffs, sizeof_coeffs, sizeof_coeffs,
                         coeff_x, coeff_y, coeff_z);
+    #endif
 #endif
 
                 //Go over each cluster at that level
@@ -155,7 +169,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                     for (int k = 0; k < tree->num_children[idx]; ++k) {
                         int child_idx = tree->children[8*idx + k];
 #ifdef CUDA_ENABLED
-                        int stream_id = k%16;
+                        int stream_id = (j*(tree->num_children[idx])+k)%16;
                         K_CUDA_CP_COMP_DOWNPASS(idx, child_idx, interp_order,
                                          coeff_start, stream_id);
 #else
@@ -170,10 +184,19 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 free_vector(coeff_z);
 
 #ifdef CUDA_ENABLED
+    #ifdef SINGLE
+                free(s_coeff_x);
+                free(s_coeff_y);
+                free(s_coeff_z);
+    #endif
                 CUDA_Free2();
 #endif
             }
         }
+
+#ifdef CUDA_ENABLED
+        delStream();
+#endif
 
         //Then go over the leaves to the targets
 
@@ -234,8 +257,23 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             }
 
 #ifdef CUDA_ENABLED
+            initStream();
+    #ifdef SINGLE
+            float *s_coeff_x  = (float*)malloc(sizeof(float)*sizeof_coeff_x);
+            float *s_coeff_y  = (float*)malloc(sizeof(float)*sizeof_coeff_y);
+            float *s_coeff_z  = (float*)malloc(sizeof(float)*sizeof_coeff_z);
+            for (int k = 0; k < sizeof_coeff_x; k++)
+                s_coeff_x[k] = coeff_x[k];
+            for (int k = 0; k < sizeof_coeff_y; k++)
+                s_coeff_y[k] = coeff_y[k];
+            for (int k = 0; k < sizeof_coeff_z; k++)
+                s_coeff_z[k] = coeff_z[k];
+            CUDA_Setup2(sizeof_coeff_x, sizeof_coeff_y, sizeof_coeff_z,
+                    s_coeff_x, s_coeff_y, s_coeff_z);
+    #else
             CUDA_Setup2(sizeof_coeff_x, sizeof_coeff_y, sizeof_coeff_z,
                     coeff_x, coeff_y, coeff_z);
+    #endif
 #endif
 
             coeff_x_start = 0; coeff_y_start = 0; coeff_z_start = 0;
@@ -252,15 +290,14 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
 #ifdef CUDA_ENABLED    
                  int stream_id = i%64;
-                 K_CUDA_CP_COMP_POT(idx, potential, interp_order,
+                 K_CUDA_CP_COMP_POT(idx, interp_order,
                             target_x_low_ind, target_x_high_ind,
                             target_y_low_ind, target_y_high_ind,
                             target_z_low_ind, target_z_high_ind,
                             target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
-                            cluster_q, 
-                            coeff_x_start, coeff_x,
-                            coeff_y_start, coeff_y, 
-                            coeff_z_start, coeff_z,
+                            coeff_x_start,
+                            coeff_y_start,
+                            coeff_z_start,
                             stream_id);
 #else
                   cp_comp_pot(idx, potential, interp_order,
@@ -284,7 +321,13 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             free_vector(coeff_z);
 
 #ifdef CUDA_ENABLED
+    #ifdef SINGLE
+            free(s_coeff_x);
+            free(s_coeff_y);
+            free(s_coeff_z);
+    #endif
             CUDA_Free2();
+            delStream();
 #endif
 
         }
@@ -292,7 +335,6 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         free_vector(weights);
 
 #ifdef CUDA_ENABLED
-        delStream();
         int target_xyz_dim = target_x_dim_glob*target_y_dim_glob*target_z_dim_glob;
         CUDA_Wrapup(target_xyz_dim, potential);
 //      debugging direct potentials

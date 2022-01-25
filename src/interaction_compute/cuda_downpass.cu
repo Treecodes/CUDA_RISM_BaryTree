@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-//#define SINGLE
+#define SINGLE
 
 #ifdef SINGLE
     #define FLOAT float
@@ -100,11 +100,14 @@ static void CUDA_CP_COMP_DOWNPASS(
             kk = kk - k2;
             int k1 = kk / interp_order_lim;
 
-            temp += coeff_x[coeff_x_start + k1] * coeff_y[coeff_y_start + k2] * coeff_z[coeff_z_start + k3] 
-                  * cluster_q[cluster_charge_start + j];
+            FLOAT cq = cluster_q[cluster_charge_start + j];
+
+            temp += coeff_x[coeff_x_start + k1] *
+                    coeff_y[coeff_y_start + k2] *
+                    coeff_z[coeff_z_start + k3] * cq;
         }
 
-        cluster_q[child_cluster_charge_start + i] += temp;
+        atomicAdd(cluster_q + child_cluster_charge_start + i, (double)temp);
     }
 
     return;
@@ -178,11 +181,13 @@ static void CUDA_CP_COMP_POT(
             int k1 = kk/interp_order_lim;
             
             FLOAT cq = cluster_q[cluster_charge_start +j];
-            temporary_potential += coeff_x[iix + k1] * coeff_y[iiy + k2]
-                          * coeff_z[iiz + k3] * cq;
+
+            temporary_potential += coeff_x[iix + k1] *
+                                   coeff_y[iiy + k2] *
+                                   coeff_z[iiz + k3] * cq;
         }                           
 
-        potential[ii] += temporary_potential;
+        atomicAdd(potential+ii, (double)temporary_potential);
     }
 
     return;
@@ -190,15 +195,14 @@ static void CUDA_CP_COMP_POT(
 
 __host__
 void K_CUDA_CP_COMP_POT(
-    int idx, double *potential, int interp_order,
+    int idx, int interp_order,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
-    double *cluster_q,
-    int coeff_x_start, double *coeff_x,
-    int coeff_y_start, double *coeff_y,
-    int coeff_z_start, double *coeff_z, 
+    int coeff_x_start,
+    int coeff_y_start,
+    int coeff_z_start,
     int stream_id)
 {
     int target_yz_dim = target_y_dim_glob * target_z_dim_glob;

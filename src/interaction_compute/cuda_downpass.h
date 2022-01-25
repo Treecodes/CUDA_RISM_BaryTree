@@ -19,15 +19,14 @@ void K_CUDA_CP_COMP_DOWNPASS(
     int idx, int child_idx, int interp_order, int coeff_start,
     int stream_id);
 void K_CUDA_CP_COMP_POT(
-    int idx, double *potential, int interp_order,
+    int idx, int interp_order,
     int target_x_low_ind,  int target_x_high_ind,
     int target_y_low_ind,  int target_y_high_ind,
     int target_z_low_ind,  int target_z_high_ind,
     int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
-    double *cluster_q,
-    int coeff_x_start, double *coeff_x,
-    int coeff_y_start, double *coeff_y,
-    int coeff_z_start, double *coeff_z,
+    int coeff_x_start,
+    int coeff_y_start,
+    int coeff_z_start,
     int stream_id);
 #ifdef __CUDACC__
 }
