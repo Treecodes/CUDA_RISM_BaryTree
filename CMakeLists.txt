@@ -39,30 +39,30 @@ endif()
 
 #GPU build requires PGI for C compiler
 #Note that both pgcc and nvc report PGI
-if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
-    message(STATUS "GPU build requires PGI compilers! Turning GPU build off.")
-    set(ENABLE_GPU_BUILD OFF CACHE BOOL "build OpenACC GPU version" FORCE)
-endif()
+#if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
+#    message(STATUS "GPU build requires PGI compilers! Turning GPU build off.")
+#    set(ENABLE_GPU_BUILD OFF CACHE BOOL "build OpenACC GPU version" FORCE)
+#endif()
 
 if(ENABLE_CUDA_BUILD)
     enable_language(CUDA)
     set(CMAKE_CUDA_HOST_LINK_LAUNCHER ${CMAKE_CXX_COMPILER})
 endif()
 
-if(ENABLE_GPU_BUILD)
-    #Creating an interface for OpenACC
-    add_library(OpenACC_C INTERFACE)
-    set_property(TARGET OpenACC_C PROPERTY
-                                      INTERFACE_COMPILE_OPTIONS
-                                      $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:
-                                      -acc
-                                      -ta=tesla:cc70$<$<CONFIG:Debug>:,time>
-                                      -Minfo>)
-    set_property(TARGET OpenACC_C PROPERTY
-                                      INTERFACE_LINK_LIBRARIES
-                                      -acc
-                                      -ta=tesla:cc70)
-endif()
+#if(ENABLE_GPU_BUILD)
+#    #Creating an interface for OpenACC
+#    add_library(OpenACC_C INTERFACE)
+#    set_property(TARGET OpenACC_C PROPERTY
+#                                      INTERFACE_COMPILE_OPTIONS
+#                                      $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:
+#                                      -acc
+#                                      -ta=tesla:cc70$<$<CONFIG:Debug>:,time>
+#                                      -Minfo>)
+#    set_property(TARGET OpenACC_C PROPERTY
+#                                      INTERFACE_LINK_LIBRARIES
+#                                      -acc
+#                                      -ta=tesla:cc70)
+#endif()
 
 add_subdirectory(src)
 add_subdirectory(examples)

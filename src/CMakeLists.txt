@@ -151,7 +151,6 @@ if(ENABLE_GPU_BUILD)
                                              c_std_99)
         target_link_libraries(     ${TRGT} PUBLIC
                                              OpenMP::OpenMP_C
-                                             OpenACC_C
                                              $<$<C_COMPILER_ID:GNU>:m>)
 #                                             -cudalib=cublas)
 
@@ -172,7 +171,6 @@ if(ENABLE_GPU_BUILD)
                                              c_std_99)
         target_link_libraries(     ${TRGT} PUBLIC
                                              OpenMP::OpenMP_C
-                                             OpenACC_C
                                              $<$<C_COMPILER_ID:GNU>:m>)
 
         install(TARGETS            ${TRGT} LIBRARY DESTINATION lib
