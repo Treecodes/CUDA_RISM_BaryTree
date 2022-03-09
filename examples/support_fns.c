@@ -157,9 +157,6 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
     if (strcasecmp(approximation_string, "LAGRANGE") == 0) {
         approximation = LAGRANGE;
 
-    } else if (strcasecmp(approximation_string, "HERMITE") == 0) {
-        approximation = HERMITE;
-    
     } else {
         printf("[random cube example] ERROR! Undefined approximation token \"%s\". Exiting.\n",
                approximation_string);

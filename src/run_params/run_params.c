@@ -39,8 +39,6 @@ void RunParams_Setup(struct RunParams **run_params_addr,
     run_params->interp_pts_per_cluster = (interp_order+1) * (interp_order+1) * (interp_order+1);
     run_params->interp_charges_per_cluster = run_params->interp_pts_per_cluster;
 
-    if (run_params->approximation == HERMITE) run_params->interp_charges_per_cluster *=8;
-
     run_params->max_per_source_leaf = max_per_source_leaf;
     run_params->max_per_target_leaf = max_per_target_leaf;
 
@@ -56,8 +54,6 @@ void RunParams_Validate(struct RunParams *run_params)
     int interp_order_lim = run_params->interp_order + 1;
     run_params->interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
     run_params->interp_charges_per_cluster = run_params->interp_pts_per_cluster;
-
-    if (run_params->approximation == HERMITE) run_params->interp_charges_per_cluster *=8;
 
     return;
 }

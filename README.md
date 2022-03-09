@@ -1,25 +1,28 @@
-     ____                _______            
-    |  _ \              |__   __|           
-    | |_) | __ _ _ __ _   _| |_ __ ___  ___ 
-    |  _ < / _` | '__| | | | | '__/ _ \/ _ \
-    | |_) | (_| | |  | |_| | | | |  __|  __/
-    |____/ \__,_|_|   \__, |_|_|  \___|\___|
-                       __/ |                
-                      |___/         
-BaryTree
-========
+      _____  _____  _____ __  __ ____                _______            
+     |  __ \|_   _|/ ____|  \/  |  _ \              |__   __|           
+     | |__) | | | | (___ | \  / | |_) | __ _ _ __ _   _| |_ __ ___  ___ 
+     |  _  /  | |  \___ \| |\/| |  _ < / _` | '__| | | | | '__/ _ \/ _ \
+     | | \ \ _| |_ ____) | |  | | |_) | (_| | |  | |_| | | | |  __/  __/
+     |_|  \_\_____|_____/|_|  |_|____/ \__,_|_|   \__, |_|_|  \___|\___|
+                                                   __/ |                
+                                                  |___/                 
 
-   A work-in-progress library for fast computation of N-body interactions on multiple GPUs,
-   BaryTree implements barycentric Lagrange and Hermite polynomial interpolation treecodes.
-   The current code employs an OpenACC GPU implementation.
+RISMBaryTree
+============
+
+   A work-in-progress library for GPU computation of N-body interactions for RISM long-range
+   kernels, using barycentric Lagrange polynomial interpolation treecodes.
+   This code employs CUDA for its GPU implementation.
+   For the MPI+OpenACC version of general purpose BaryTree,
+   [see this repository](https://github.com/Treecodes/BaryTree).
 
 
    Authors:  
-   - Leighton W. Wilson  (lwwilson@umich.edu) 
-   - Nathan J. Vaughn  (njvaughn@umich.edu) 
-   
-   Department of Mathematics,
-   University of Michigan, Ann Arbor.
+   - Leighton W. Wilson
+   - Nathan J. Vaughn
+   - Erick Aitchison
+   - Tyler Luchko
+   - Ray Luo
    
 
 Building
@@ -28,25 +31,13 @@ This project uses CMake to manage and configure its build system. In principle,
 building this project is as simple as executing the following from the top level
 directory of BaryTree:
 
-    mkdir build; cd build; export CC=<C compiler>; cmake ..; make
+```bash
+mkdir build; cd build; export CC=<C compiler> export CUDACXX=<CUDA compiler>; cmake ..; make
+```
 
-Compiling GPU versions requires that a PGI C compiler be used. For more information
-on building and installing, see __INSTALL.md__ in this directory.
-
-
-Examples
---------
-See the __examples__ directory for several example executables that use __BaryTree__
-and the Trilinos __Zoltan__ library for load balancing, in addition to an example 
-using the library's interface for C programs. See __examples/README.md__ for more
-details.
-
-
-Interfaces
-----------
-See the __interfaces__ directory for __BaryTree__ interfaces for non-C programs.
-Currently, there is a Python interface and an example script using that interface.
-See __interfaces/README.md__ for more details.
+You may also need to specify `CMAKE_CUDA_FLAGS` when you configure with `cmake`.
+For example: `cmake .. -DCMAKE_CUDA_FLAGS="-gencode arch=compute_75,code=sm_75"`.
+For more information on building and installing, see __INSTALL.md__ in this directory.
 
 
 References
@@ -77,4 +68,4 @@ References
                                                     
 License
 -------
-Copyright © 2019-2020, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
+Copyright © 2019-2022, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).

@@ -15,7 +15,6 @@ typedef enum APPROXIMATION
 {
     NO_APPROX,
     LAGRANGE,
-    HERMITE
 } APPROXIMATION;
 
 

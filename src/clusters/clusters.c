@@ -172,9 +172,6 @@ void Clusters_Alloc(struct Clusters **clusters_addr, int length, const struct Ru
     clusters->z = NULL;
     clusters->q = NULL;
 
-    if (approximation == HERMITE)
-        clusters->num_charges *= 8;
-
     if (clusters->num > 0) {
         make_vector(clusters->x, clusters->num);
         make_vector(clusters->y, clusters->num);

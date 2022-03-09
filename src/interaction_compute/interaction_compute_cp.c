@@ -168,9 +168,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
 #endif
-
-                } else if (run_params->approximation == HERMITE) {
-                    // NOT IMPLEMENTED
                 }
 
 
@@ -198,9 +195,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
 #endif
-
-                } else if (run_params->approximation == HERMITE) {
-                    // NOT IMPLEMENTED
                 }
 
 
@@ -228,9 +222,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
 #endif
-
-                } else if (run_params->approximation == HERMITE) {
-                    // NOT IMPLEMENTED
                 }
 
             }
